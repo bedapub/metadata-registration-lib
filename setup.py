@@ -27,7 +27,8 @@ setup(
     packages=find_packages(),
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "requests"
+        "requests",
+        "dynamic-form==0.3.1"
     ],
     classifiers=[
         "Intended Audience :: Developers",

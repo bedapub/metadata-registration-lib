@@ -1,7 +1,25 @@
 import requests
+from dynamic_form import JsonFlaskParser
 
 PRIMITIVES = (bool, int, float, str)
 PRIMITIVES_LIST = (*PRIMITIVES, list)
+
+
+def login_and_get_header(login_url, use_token=True, email=None, password=None):
+    if use_token and email and password:
+        # Retrieve access token
+        login_data = {"email": email, "password": password}
+
+        login_res = requests.post(url=login_url, json=login_data)
+        if login_res.status_code != 200:
+            raise Exception(f"Login to API failed. {login_res.json()}")
+
+        header = login_res.json()
+    else:
+        print("Access API without access token")
+        header = {}
+
+    return header
 
 
 def map_key_value(url, key="id", value="name"):
@@ -27,6 +45,43 @@ def map_key_value(url, key="id", value="name"):
         raise Exception(f"Request to {url} failed with key: {key} and value: {value}. {res.json()}")
 
     return {entry[key]: entry[value] for entry in res.json()}
+
+
+def get_form_by_name(name, form_endpoint):
+    header = {"X-Fields": "name, id"}
+    forms_res = requests.get(form_endpoint, headers=header)
+
+    if forms_res.status_code != 200:
+        raise Exception(f"Fail to load all forms [{forms_res.status_code}] {forms_res.json()}")
+
+    try:
+        form_entry = next(filter(lambda entry: entry["name"] == name, forms_res.json()))
+        form_json = requests.get(f"{form_endpoint}/id/{form_entry['id']}").json()
+        parser = JsonFlaskParser()
+        form_class = parser.to_form(form_json)[1]
+        return {"class": form_class, "json": form_json}
+
+    except StopIteration:
+        raise Exception(f"Fail to find form in database (name:{name})")
+
+
+def unexpend_json_properties(json_obj):
+    """
+    Function to replace extended "propery" dict by the id only
+    """
+    for k, v in json_obj.items():
+        if k == "property" and isinstance(v, dict):
+            json_obj[k] = v["id"]
+
+        elif isinstance(v, dict):
+            v = unexpend_json_properties(v)
+
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    item = unexpend_json_properties(item)
+
+    return json_obj
 
 
 class FormatConverter:

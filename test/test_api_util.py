@@ -1,6 +1,50 @@
 import unittest
 
-from metadata_registration_lib.api_utils import FormatConverter
+from metadata_registration_lib.api_utils import (FormatConverter,
+    unexpend_json_properties)
+
+class TestSimpleFunctions(unittest.TestCase):
+
+    def test_unexpend_json_properties(self):
+        input_data = {
+            "key_1": "value_1",
+            "key_2": 123,
+            "key_3": [
+                {
+                    "key_1": "value_1",
+                    "key_2": 123,
+                    "property": {
+                        "id": "5e59341a08a7b2ec0319cda1",
+                        "label": "xxxxx",
+                        "name": "xxxxx",
+                        "level": "xxxxx",
+                        "value_type": {
+                            "data_type": "text",
+                            "controlled_vocabulary": {
+                                "description": "xxxxx",
+                                "deprecated": False
+                            }
+                        },
+                        "deprecated": False
+                    },
+                }
+            ],
+        }
+
+        expected_output = {
+            "key_1": "value_1",
+            "key_2": 123,
+            "key_3": [
+                {
+                    "key_1": "value_1",
+                    "key_2": 123,
+                    "property": "5e59341a08a7b2ec0319cda1"
+                }
+            ]
+        }
+
+        self.assertEqual(unexpend_json_properties(input_data), expected_output)
+
 
 class TestFormatConverter(unittest.TestCase):
 
