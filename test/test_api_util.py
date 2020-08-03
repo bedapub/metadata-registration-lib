@@ -347,3 +347,31 @@ class TestNestedEntry(unittest.TestCase):
         user_entry = c.entries[0]
 
         self.assertEqual(user_entry.value.get_entry_by_name("username").value, "Edward")
+
+
+class TestNestedListEntry(unittest.TestCase):
+
+    def test_find_nested_entry(self):
+        """Get a specific NestedEntry based on the value of a property"""
+        mapper = {"1": "users", "2": "username", "3": "phone"}
+
+        input_format = [
+            {"prop": "1", "value": [
+                [
+                    {"prop": "2", "value": "Edward"},
+                    {"prop": "3", "value": "+33(0)123456789"}
+                ],
+                [
+                    {"prop": "2", "value": "John"},
+                    {"prop": "3", "value": "+33(9)876543210"}
+                ]
+            ]}
+        ]
+
+        c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
+        c.add_api_format(input_format)
+        users_entry = c.entries[0]
+        nested_entry, position = users_entry.value.find_nested_entry("username", "John")
+
+        self.assertEqual(nested_entry.get_form_format()["phone"], "+33(9)876543210")
+        self.assertEqual(position, 1)

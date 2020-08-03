@@ -282,3 +282,15 @@ class NestedListEntry:
     def get_form_format(self):
         return [entry.get_form_format() for entry in self.value]
 
+    def find_nested_entry(self, name, value):
+        """
+        Returns a specific nested "NestedEntry" based on the value of one
+        of its entries.
+        """
+        for i, nested_entry in enumerate(self.value):
+            entry_data = nested_entry.get_form_format()
+
+            if entry_data[name] == value:
+                return nested_entry, i
+
+        raise Exception(f"Nested entry with {name} = '{value}' not found.")
