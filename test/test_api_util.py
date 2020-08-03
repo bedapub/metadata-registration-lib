@@ -328,6 +328,46 @@ class TestFormatConverter(unittest.TestCase):
 
         self.assertEqual(c.get_entry_by_name("username").value, "Edward")
 
+    def test_clean_data(self):
+        "Remove empty values and perform other cleaning (like stripping strings)"
+        mapper = {
+            "TO_KEEP": "0",
+            "TO_KEEP_1": "1",
+            "TO_KEEP_2": "2",
+            "TO_KEEP_3": "3",
+            "TO_KEEP_4": "4",
+            "TO_REMOVE": "5",
+            "TO_REMOVE_2": "6",
+        }
+
+        form_format = {
+            "TO_KEEP_1": 1,
+            "TO_REMOVE": "",
+            "TO_KEEP_2": [1,2,""],
+            "TO_KEEP_3": {"TO_KEEP": 31, "TO_REMOVE": ""},
+            "TO_KEEP_4": [
+                {"TO_KEEP": 441, "TO_REMOVE": ""},
+                {"TO_REMOVE": "", "TO_REMOVE_2": ""}
+            ]
+        }
+        c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
+        c.add_form_format(form_format)
+        c.clean_data()
+
+        actual_output = c.get_form_format()
+        expected_output = {
+            "TO_KEEP_1": 1,
+            "TO_KEEP_2": [1,2],
+            "TO_KEEP_3": {"TO_KEEP": 31},
+            "TO_KEEP_4": [
+                {"TO_KEEP": 441},
+                {}
+            ]
+        }
+
+        self.assertEqual(actual_output, expected_output)
+
+
 
 class TestNestedEntry(unittest.TestCase):
 

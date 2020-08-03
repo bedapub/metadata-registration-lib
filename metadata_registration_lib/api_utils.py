@@ -160,6 +160,23 @@ class FormatConverter:
         else:
             return None
 
+    def clean_data(self):
+        """
+        Clean the value of the entries.
+        Check Entry.clean_data to see expected behaviour.
+        """
+        clean_entries = []
+        discarded_entries = []
+        for entry in self.entries:
+            entry.clean_data()
+            if keep_value(entry.value):
+                clean_entries.append(entry)
+            else:
+                discarded_entries.append(entry)
+
+        self.entries = clean_entries
+        return discarded_entries
+
 class Entry:
 
     def __init__(self, converter):
@@ -224,6 +241,33 @@ class Entry:
             return self.value
 
         return self.value.get_form_format()
+
+    def clean_data(self):
+        """
+        Clean the value of the entry.
+        Decisions:
+            - Strings are stripped
+            - Empty strings are removed entirely
+            - Empty lists are kept
+            - Empty dicts are kept
+        """
+        if type(self.value) in PRIMITIVES:
+            self.value = clean_simple_value(self.value)
+
+        elif isinstance(self.value, list):
+            clean_values = [clean_simple_value(v) for v in self.value]
+            self.value = [v for v in clean_values if keep_value(v)]
+
+        elif isinstance(self.value, NestedEntry):
+            for entry in self.value.value:
+                entry.clean_data()
+            self.value.value = [entry for entry in self.value.value if keep_value(entry.value)]
+
+        elif isinstance(self.value, NestedListEntry):
+            for nested_entry in self.value.value:
+                for entry in nested_entry.value:
+                    entry.clean_data()
+                nested_entry.value = [entry for entry in nested_entry.value if keep_value(entry.value)]
 
 
 class NestedEntry:
@@ -294,3 +338,16 @@ class NestedListEntry:
                 return nested_entry, i
 
         raise Exception(f"Nested entry with {name} = '{value}' not found.")
+
+
+def clean_simple_value(value):
+    if isinstance(value, str):
+        return value.strip()
+    else:
+        return value
+
+def keep_value(value):
+    if value == "":
+        return False
+    else:
+        return True
