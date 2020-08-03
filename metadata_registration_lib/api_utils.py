@@ -65,12 +65,12 @@ def get_form_by_name(name, form_endpoint):
         raise Exception(f"Fail to find form in database (name:{name})")
 
 
-def unexpend_json_properties(json_obj):
+def unexpend_json_properties(json_obj, key_name="property"):
     """
     Function to replace extended "propery" dict by the id only
     """
     for k, v in json_obj.items():
-        if k == "property" and isinstance(v, dict):
+        if k == key_name and isinstance(v, dict):
             json_obj[k] = v["id"]
 
         elif isinstance(v, dict):
@@ -173,7 +173,10 @@ class Entry:
         return f"<Entry(property: {self.prop_name}, id: {self.prop_id}, value: {self.value})>"
 
     def add_api_format(self, data):
-        self.prop_id = data[self.converter.key_name]
+        if isinstance(data[self.converter.key_name], dict):
+            self.prop_id = data[self.converter.key_name]["id"]
+        else:
+            self.prop_id = data[self.converter.key_name]
         self.prop_name = self.converter.mapper[self.prop_id]
 
         def convert_value(value):
