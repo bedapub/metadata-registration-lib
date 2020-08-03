@@ -313,3 +313,37 @@ class TestFormatConverter(unittest.TestCase):
         expected_api_format = c.add_form_format(form_format).get_api_format()
 
         self.assertEqual(expected_api_format, actual_api_format)
+
+    def test_get_entry_by_name(self):
+        """Get an entry based on its prop_name"""
+        mapper = {"1": "username", "2": "phone"}
+
+        input_format = [
+            {"prop": "1", "value": "Edward"},
+            {"prop": "2", "value": "+33(0)123456789"}
+        ]
+
+        c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
+        c.add_api_format(input_format)
+
+        self.assertEqual(c.get_entry_by_name("username").value, "Edward")
+
+
+class TestNestedEntry(unittest.TestCase):
+
+    def test_get_entry_by_name(self):
+        """Get an entry based on its prop_name"""
+        mapper = {"1": "user", "2": "username", "3": "phone"}
+
+        input_format = [
+            {"prop": "1", "value": [
+                {"prop": "2", "value": "Edward"},
+                {"prop": "3", "value": "+33(0)123456789"}
+            ]}
+        ]
+
+        c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
+        c.add_api_format(input_format)
+        user_entry = c.entries[0]
+
+        self.assertEqual(user_entry.value.get_entry_by_name("username").value, "Edward")

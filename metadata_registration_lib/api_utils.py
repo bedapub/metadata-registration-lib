@@ -153,6 +153,12 @@ class FormatConverter:
         """
         return {entry.prop_name: entry.get_form_format() for entry in self.entries}
 
+    def get_entry_by_name(self, name):
+        for entry in self.entries:
+            if entry.prop_name == name:
+                return entry
+        else:
+            return None
 
 class Entry:
 
@@ -241,6 +247,13 @@ class NestedEntry:
 
     def get_form_format(self):
         return {entry.prop_name: entry.get_form_format() for entry in self.value}
+
+    def get_entry_by_name(self, name):
+        for entry in self.value:
+            if entry.prop_name == name:
+                return entry
+        else:
+            return None
 
 
 class NestedListEntry:
