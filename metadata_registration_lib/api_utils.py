@@ -177,6 +177,47 @@ class FormatConverter:
         self.entries = clean_entries
         return discarded_entries
 
+    def add_or_update_entries(self, entries):
+        """
+        Update the entries with the new values the given entry list.
+        If an entry already exists, its value is replaced, if not, it's created.
+        """
+        current_entries = {e.prop_id: e for e in self.entries}
+
+        for entry in entries:
+            if entry.prop_id in current_entries:
+                current_entries[entry.prop_id].value = entry.value
+            else:
+                self.entries.append(entry)
+        return self
+
+    def remove_entries(self, entries=None, prop_names=None, prop_ids=None):
+        """
+        Remove specific entries.
+        3 possible input: list of entries, prop_names or prop_ids.
+        """
+        if len([1 for p in [entries, prop_names, prop_ids] if p is not None]) != 1:
+            raise Exception("Please give only one of the following: entries, prop_names, prop_ids")
+
+        if entries is not None:
+            to_remove = [e.prop_id for e in entries]
+            attribute = "prop_id"
+        elif prop_ids is not None:
+            to_remove = prop_ids
+            attribute = "prop_id"
+        elif prop_names is not None:
+            to_remove = prop_names
+            attribute = "prop_name"
+
+        cleaned_entries = []
+        for entry in self.entries:
+            if not getattr(entry, attribute) in to_remove:
+                cleaned_entries.append(entry)
+
+        self.entries = cleaned_entries
+        return self
+
+
 class Entry:
 
     def __init__(self, converter):

@@ -350,8 +350,7 @@ class TestFormatConverter(unittest.TestCase):
                 {"TO_REMOVE": "", "TO_REMOVE_2": ""}
             ]
         }
-        c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
-        c.add_form_format(form_format)
+        c = FormatConverter(mapper=mapper).add_form_format(form_format)
         c.clean_data()
 
         actual_output = c.get_form_format()
@@ -367,6 +366,43 @@ class TestFormatConverter(unittest.TestCase):
 
         self.assertEqual(actual_output, expected_output)
 
+    def test_add_or_update_entries(self):
+        mapper = {"username": "1", "first_name": "2", "last_name": "3"}
+
+        form_format_1 = {"username": "johnd", "first_name": "John"}
+        form_format_2 = {"username": "johnd", "last_name": "Doe"}
+
+        c_1 = FormatConverter(mapper=mapper).add_form_format(form_format_1)
+        c_2 = FormatConverter(mapper=mapper).add_form_format(form_format_2)
+
+        expected_output = {
+            "username": "johnd",
+            "first_name": "John",
+            "last_name": "Doe"
+        }
+        actual_output = c_1.add_or_update_entries(c_2.entries).get_form_format()
+
+        self.assertEqual(actual_output, expected_output)
+
+    def test_remove_entries(self):
+        mapper = {"KEEP": "0", "REMOVE_1": "1", "REMOVE_2": "2", "REMOVE_3": "3"}
+
+        form_format = {"KEEP": 1, "REMOVE_1": 2, "REMOVE_2": 3, "REMOVE_3": 4 }
+        c = FormatConverter(mapper=mapper).add_form_format(form_format)
+        assert len(c.entries) == 4
+
+        form_format_to_remove = {"REMOVE_1": 2}
+        c_remove = FormatConverter(mapper=mapper).add_form_format(form_format_to_remove)
+
+        c.remove_entries(entries=c_remove.entries)
+        assert len(c.entries) == 3
+
+        c.remove_entries(prop_names=["REMOVE_2"])
+        assert len(c.entries) == 2
+
+        c.remove_entries(prop_ids=["3"])
+        assert len(c.entries) == 1
+        assert c.entries[0].prop_name == "KEEP"
 
 
 class TestNestedEntry(unittest.TestCase):
