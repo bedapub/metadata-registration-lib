@@ -242,7 +242,8 @@ class Entry:
                 return value
             elif isinstance(value, list):
                 if all(type(entry) in PRIMITIVES for entry in value):  # list of simple values
-                    return value
+                    # No weird format like mongoengine.base.datastructures.BaseList
+                    return list(value)
                 elif all(isinstance(entry, dict) for entry in value):  # FormField
                     return NestedEntry(self.converter).add_api_format(value)
                 elif all(isinstance(entry, list) for entry in value):  # FieldList of FormField
@@ -263,7 +264,8 @@ class Entry:
                 return NestedEntry(self.converter).add_form_format(value)
             elif isinstance(value, list):
                 if all(type(entry) in PRIMITIVES for entry in value):
-                    return value
+                    # No weird format like mongoengine.base.datastructures.BaseList
+                    return list(value)
                 if all(type(entry) is dict for entry in value):
                     return NestedListEntry(self.converter).add_form_format(value)
 
