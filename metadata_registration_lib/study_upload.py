@@ -62,85 +62,60 @@ def post_study(study_data, host, email=None, password=None):
     return study_res.json()["id"]
 
 
-# def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None):
-#     """
-#     The main "dataset_data" input should be formated as follow:
-#     {
-#         "form_name": form_name,
-#         "manual_meta_information": {"user": user_name}
-#         "entries": {
-#             property_name: value,
-#             property_name: value,
-#             property_name: [value1, value2, ...],
-#             property_name: [
-#                 {
-#                     property_name: value,
-#                     property_name: value,
-#                 }
-#             ]
-#         }
-#     }
-#     """
-#     endpoints = get_endpoints(host)
+def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None):
+    """
+    The main "dataset_data" input should be formated as follow:
+    {
+        "form_name": form_name,
+        "manual_meta_information": {"user": user_name}
+        "entries": {
+            property_name: value,
+            property_name: value,
+            property_name: [value1, value2, ...],
+            property_name: [
+                {
+                    property_name: value,
+                    property_name: value,
+                }
+            ]
+        }
+    }
+    """
+    endpoints = get_endpoints(host)
 
-#     prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
-#     prop_id_to_name = map_key_value(endpoints["property"], key="id", value="name")
+    # Get authentification token
+    headers = login_and_get_header(
+        login_url = endpoints["login"],
+        use_token = True,
+        email = email,
+        password = password
+    )
 
-#     # Get authentification token
-#     headers = login_and_get_header(endpoints["login"], email, password)
+    # Parse dataset data
+    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
 
-#     # Get study we want to append a dataset to
-#     study_json = api_get(f"{endpoints['study']}/id/{study_id}")
+    dataset_converter = FormatConverter(mapper=prop_name_to_id)
+    dataset_converter.add_form_format(dataset_data["entries"])
+    dataset_converter.clean_data()
 
-#     # Generates dataset UUID
-#     if not "uuid" in dataset_data["entries"]:
-#         dataset_data["entries"]["uuid"] = str(uuid.uuid1())
+    # Build API friendly data
+    dataset_api_data = {
+        "form_name": dataset_data["form_name"],
+        "entries": dataset_converter.get_api_format(),
+        "manual_meta_information": dataset_data.get("manual_meta_information", {})
+    }
 
-#     # Convert from "form" format to "entries" API friendly format
-#     form_json = get_form_json_by_name(endpoints["form"], dataset_data["form_name_construction"])
+    # Post dataset
+    url = f"{endpoints['study']}/id/{study_id}/datasets"
+    dataset_res = requests.post(url=url, json=dataset_api_data, headers=headers)
 
-#     dataset_entryset = EntrySet()
-#     dataset_entryset.set_entries_from_simple_format(
-#         data = dataset_data["entries"],
-#         form_json = form_json,
-#         map = prop_name_to_id
-#     )
-#     dataset_entryset.clean_data()
+    if dataset_res.status_code != 201:
+        raise Exception(f"Fail to add dataset to study. {dataset_res.json()}")
 
-#     # In the next steps, we modify chained references to objects that are actually
-#     # in the study entries at the start. Since we're editing different references 
-#     # to the same mutable objects, it works (seems dodgy though)
+    dataset_uuid = dataset_res.json()["uuid"]
+    print(f"Successfully added dataset to study (dataset uuid: {dataset_uuid})")
 
-#     # Check if "datasets" entry already exist study, creates it if it doesn't
-#     study_entryset = EntrySet()
-#     study_entryset.set_entries_from_api_format(study_json["entries"], prop_id_to_name)
-
-#     datasets_entry = study_entryset.get_entry_by_name("datasets")
-
-#     if datasets_entry is not None:
-#         datasets_entry.value.append(dataset_entryset.entries)
-#     else:
-#         study_entryset.entries.append(StudyEntry(
-#             identifier = prop_name_to_id["datasets"],
-#             name = "datasets",
-#             value = [dataset_entryset.entries]
-#         ))
-
-#     study_json["entries"] = study_entryset.api_format()
-#     study_json["form_name"] = dataset_data["form_name"]
-#     study_json["manual_meta_information"] = dataset_data.get("manual_meta_information", {})
-
-#     # Post study
-#     study_res = requests.put(url=f"{endpoints['study']}/id/{study_id}", json=study_json, headers=headers)
-
-#     if study_res.status_code != 200:
-#         raise Exception(f"Fail to update study. {study_res.json()}")
-
-#     study_info = f"(dataset_id: {dataset_data['entries']['dataset_id']}, id: {dataset_data['entries']['uuid']})"
-
-#     print(f"Successfully added dataset to study " + study_info)
-
-#     return dataset_data['entries']['uuid']
+    return dataset_uuid
 
 
 # def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=None, password=None):
@@ -189,7 +164,7 @@ def post_study(study_data, host, email=None, password=None):
 #     pe_entryset.clean_data()
 
 #     # In the next steps, we modify chained references to objects that are actually
-#     # in the study entries at the start. Since we're editing different references 
+#     # in the study entries at the start. Since we're editing different references
 #     # to the same mutable objects, it works (seems dodgy though)
 
 #     # Recreate study entries and find dataset
