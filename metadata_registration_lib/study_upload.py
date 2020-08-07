@@ -13,7 +13,6 @@ def post_study(study_data, host, email=None, password=None):
         "manual_meta_information": {"user": user_name}
         "entries": {
             property_name: value,
-            property_name: value,
             property_name: [value1, value2, ...],
             property_name: [
                 {
@@ -26,40 +25,20 @@ def post_study(study_data, host, email=None, password=None):
     """
     endpoints = get_endpoints(host)
 
-    # Get authentification token
-    headers = login_and_get_header(
-        login_url = endpoints["login"],
-        use_token = True,
+    # Format and send data to API
+    study_id = send_study_nested_entity_to_api(
+        data = study_data,
+        id_key = "id",
+        url = endpoints["study"],
+        method = "post",
+        endpoints = endpoints,
         email = email,
         password = password
     )
 
-    # Parse study data
-    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
+    print(f"Successfully registered study (id = {study_id})")
 
-    study_converter = FormatConverter(mapper=prop_name_to_id)
-    study_converter.add_form_format(study_data["entries"])
-    study_converter.clean_data()
-
-    # Build API friendly data
-    study_api_data = {
-        "form_name": study_data["form_name"],
-        "initial_state": study_data["initial_state"],
-        "entries": study_converter.get_api_format(),
-        "manual_meta_information": study_data.get("manual_meta_information", {})
-    }
-
-    # Post study
-    study_res = requests.post(url=endpoints["study"], json=study_api_data, headers=headers)
-
-    if study_res.status_code != 201:
-        raise Exception(f"Fail to add study. {study_res.json()}")
-
-    study_info = f"(study_id: {study_data['entries']['study_id']}, id: {study_res.json()['id']})"
-
-    print(f"Successfully registered study " + study_info)
-
-    return study_res.json()["id"]
+    return study_id
 
 
 def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None):
@@ -70,7 +49,6 @@ def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None
         "manual_meta_information": {"user": user_name}
         "entries": {
             property_name: value,
-            property_name: value,
             property_name: [value1, value2, ...],
             property_name: [
                 {
@@ -83,36 +61,17 @@ def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None
     """
     endpoints = get_endpoints(host)
 
-    # Get authentification token
-    headers = login_and_get_header(
-        login_url = endpoints["login"],
-        use_token = True,
+    # Format and send data to API
+    dataset_uuid = send_study_nested_entity_to_api(
+        data = dataset_data,
+        id_key = "uuid",
+        url = f"{endpoints['study']}/id/{study_id}/datasets",
+        method = "post",
+        endpoints = endpoints,
         email = email,
         password = password
     )
 
-    # Parse dataset data
-    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
-
-    dataset_converter = FormatConverter(mapper=prop_name_to_id)
-    dataset_converter.add_form_format(dataset_data["entries"])
-    dataset_converter.clean_data()
-
-    # Build API friendly data
-    dataset_api_data = {
-        "form_name": dataset_data["form_name"],
-        "entries": dataset_converter.get_api_format(),
-        "manual_meta_information": dataset_data.get("manual_meta_information", {})
-    }
-
-    # Post dataset
-    url = f"{endpoints['study']}/id/{study_id}/datasets"
-    dataset_res = requests.post(url=url, json=dataset_api_data, headers=headers)
-
-    if dataset_res.status_code != 201:
-        raise Exception(f"Fail to add dataset to study. {dataset_res.json()}")
-
-    dataset_uuid = dataset_res.json()["uuid"]
     print(f"Successfully added dataset to study (dataset uuid: {dataset_uuid})")
 
     return dataset_uuid
@@ -126,7 +85,6 @@ def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=No
         "manual_meta_information": {"user": user_name}
         "entries": {
             property_name: value,
-            property_name: value,
             property_name: [value1, value2, ...],
             property_name: [
                 {
@@ -139,36 +97,17 @@ def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=No
     """
     endpoints = get_endpoints(host)
 
-    # Get authentification token
-    headers = login_and_get_header(
-        login_url = endpoints["login"],
-        use_token = True,
+    # Format and send data to API
+    pe_uuid = send_study_nested_entity_to_api(
+        data = pe_data,
+        id_key = "uuid",
+        url = f"{endpoints['study']}/id/{study_id}/datasets/id/{dataset_uuid}/pes",
+        method = "post",
+        endpoints = endpoints,
         email = email,
         password = password
     )
 
-    # Parse processing event data
-    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
-
-    pe_converter = FormatConverter(mapper=prop_name_to_id)
-    pe_converter.add_form_format(pe_data["entries"])
-    pe_converter.clean_data()
-
-    # Build API friendly data
-    pe_api_data = {
-        "form_name": pe_data["form_name"],
-        "entries": pe_converter.get_api_format(),
-        "manual_meta_information": pe_data.get("manual_meta_information", {})
-    }
-
-    # Post processing event
-    url = f"{endpoints['study']}/id/{study_id}/datasets/id/{dataset_uuid}/pes"
-    pe_res = requests.post(url=url, json=pe_api_data, headers=headers)
-
-    if pe_res.status_code != 201:
-        raise Exception(f"Fail to add processing event to dataset. {pe_res.json()}")
-
-    pe_uuid = pe_res.json()["uuid"]
     print(f"Successfully added processing event to dataset (id: {pe_uuid})")
 
     return pe_uuid
@@ -192,3 +131,43 @@ def api_get(url):
 
     return obj_res.json()
 
+def send_study_nested_entity_to_api(data, id_key, url, method, endpoints, email, password):
+    """Format and send data to the API (nested study entity data)"""
+    # Get authentification token
+    headers = login_and_get_header(
+        login_url = endpoints["login"],
+        use_token = True,
+        email = email,
+        password = password
+    )
+
+    # Format data (cleaning + conversion from "form format" to "api format")
+    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
+
+    converter = FormatConverter(mapper=prop_name_to_id)
+    converter.add_form_format(data["entries"])
+    converter.clean_data()
+
+    # Build API friendly data
+    api_data = {
+        "form_name": data["form_name"],
+        "entries": converter.get_api_format(),
+        "manual_meta_information": data.get("manual_meta_information", {})
+    }
+    if data.get("initial_state") is not None:
+        api_data["initial_state"] = data["initial_state"]
+
+    # Send data to API
+    if method == "post":
+        res = requests.post(url=url, json=api_data, headers=headers)
+        if res.status_code != 201:
+            raise Exception(f"Fail to POST this nested study entry. {res.json()}")
+
+        return res.json()[id_key]
+
+    elif method == "put":
+        res = requests.put(url=url, json=api_data, headers=headers)
+        if res.status_code != 200:
+            raise Exception(f"Fail to PUT this nested study entry. {res.json()}")
+
+        return True
