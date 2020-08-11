@@ -3,3 +3,17 @@ A library for the Study metadata registration tool.
 
 ## Purpose
 This app is being developed as part of the Study Registration Tool prototype for the BiOmics team.
+
+## Installation
+
+### Method 1: install as a package
+The package is not on the official PyPi. You can install it running this command for example:
+```bash
+pip install -e git+https://github.com/bedapub/metadata-registration-lib.git@master#egg=metadata_registration_lib
+```
+
+### Method 2: clone repository
+You can directly clone this repository and manually install the requirements using for example:
+```bash
+pip -f requirements.txt
+```
