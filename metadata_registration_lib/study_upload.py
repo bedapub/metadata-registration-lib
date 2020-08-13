@@ -1,8 +1,8 @@
 from urllib.parse import urljoin
 import requests
 
-from api_utils import (map_key_value, login_and_get_header,
-    FormatConverter)
+from metadata_registration_lib.api_utils import (map_key_value,
+    login_and_get_header, FormatConverter)
 
 def post_study(study_data, host, email=None, password=None):
     """
@@ -25,16 +25,22 @@ def post_study(study_data, host, email=None, password=None):
     """
     endpoints = get_endpoints(host)
 
-    # Format and send data to API
-    study_id = send_study_nested_entity_to_api(
-        data = study_data,
-        id_key = "id",
-        url = endpoints["study"],
-        method = "post",
-        endpoints = endpoints,
+    # Get authentification token
+    headers = login_and_get_header(
+        login_url = endpoints["login"],
+        use_token = True,
         email = email,
         password = password
     )
+
+    # Format and send data to API
+    study_id = upload_study_related_entity(
+        data = study_data,
+        url = endpoints["study"],
+        method = "post",
+        property_url = endpoints["property"],
+        headers = headers
+    )[0]["id"]
 
     print(f"Successfully registered study (id = {study_id})")
 
@@ -61,16 +67,22 @@ def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None
     """
     endpoints = get_endpoints(host)
 
-    # Format and send data to API
-    dataset_uuid = send_study_nested_entity_to_api(
-        data = dataset_data,
-        id_key = "uuid",
-        url = f"{endpoints['study']}/id/{study_id}/datasets",
-        method = "post",
-        endpoints = endpoints,
+    # Get authentification token
+    headers = login_and_get_header(
+        login_url = endpoints["login"],
+        use_token = True,
         email = email,
         password = password
     )
+
+    # Format and send data to API
+    dataset_uuid = upload_study_related_entity(
+        data = dataset_data,
+        url = f"{endpoints['study']}/id/{study_id}/datasets",
+        method = "post",
+        property_url = endpoints["property"],
+        headers = headers
+    )[0]["uuid"]
 
     print(f"Successfully added dataset to study (dataset uuid: {dataset_uuid})")
 
@@ -97,16 +109,22 @@ def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=No
     """
     endpoints = get_endpoints(host)
 
-    # Format and send data to API
-    pe_uuid = send_study_nested_entity_to_api(
-        data = pe_data,
-        id_key = "uuid",
-        url = f"{endpoints['study']}/id/{study_id}/datasets/id/{dataset_uuid}/pes",
-        method = "post",
-        endpoints = endpoints,
+    # Get authentification token
+    headers = login_and_get_header(
+        login_url = endpoints["login"],
+        use_token = True,
         email = email,
         password = password
     )
+
+    # Format and send data to API
+    pe_uuid = upload_study_related_entity(
+        data = pe_data,
+        url = f"{endpoints['study']}/id/{study_id}/datasets/id/{dataset_uuid}/pes",
+        method = "post",
+        property_url = endpoints["property"],
+        headers = headers
+    )[0]["uuid"]
 
     print(f"Successfully added processing event to dataset (id: {pe_uuid})")
 
@@ -131,18 +149,11 @@ def api_get(url):
 
     return obj_res.json()
 
-def send_study_nested_entity_to_api(data, id_key, url, method, endpoints, email, password):
-    """Format and send data to the API (nested study entity data)"""
-    # Get authentification token
-    headers = login_and_get_header(
-        login_url = endpoints["login"],
-        use_token = True,
-        email = email,
-        password = password
-    )
+def upload_study_related_entity(data, url, method, property_url, headers):
+    """Format and send data to the API (study related entity)"""
 
     # Format data (cleaning + conversion from "form format" to "api format")
-    prop_name_to_id = map_key_value(endpoints["property"], key="name", value="id")
+    prop_name_to_id = map_key_value(property_url, key="name", value="id")
 
     converter = FormatConverter(mapper=prop_name_to_id)
     converter.add_form_format(data["entries"])
@@ -161,13 +172,19 @@ def send_study_nested_entity_to_api(data, id_key, url, method, endpoints, email,
     if method == "post":
         res = requests.post(url=url, json=api_data, headers=headers)
         if res.status_code != 201:
-            raise Exception(f"Fail to POST this nested study entry. {res.json()}")
-
-        return res.json()[id_key]
+            message = f"Failed to POST study related entity. {res.json()}"
+            success = False
+        else:
+            message = "Succeded to POST study related entity"
+            success = True
 
     elif method == "put":
         res = requests.put(url=url, json=api_data, headers=headers)
         if res.status_code != 200:
-            raise Exception(f"Fail to PUT this nested study entry. {res.json()}")
+            message = f"Failed to PUT study related entity. {res.json()}"
+            success = False
+        else:
+            message = "Succeded to PUT study related entity"
+            success = True
 
-        return True
+    return (res.json(), message, success)
