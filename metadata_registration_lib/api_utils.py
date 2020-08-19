@@ -46,6 +46,17 @@ def map_key_value(url, key="id", value="name"):
 
     return {entry[key]: entry[value] for entry in res.json()}
 
+def reverse_map(input_map):
+    """
+    Reverse keys and values of dictionnary
+    Input: {k1: v1, k2: v2, ...}
+    Output:{v1: k1, v2: k2, ...}
+    ...
+    :return: A dict with maps value -> key
+    :rtype: dict
+    """
+    return {v: k for k, v in input_map.items()}
+
 
 def get_form_by_name(name, form_endpoint):
     header = {"X-Fields": "name, id"}

@@ -1,9 +1,22 @@
 import unittest
 
 from metadata_registration_lib.api_utils import (FormatConverter,
-    unexpend_json_properties)
+    unexpend_json_properties, reverse_map)
 
 class TestSimpleFunctions(unittest.TestCase):
+
+    def test_reverse_map(self):
+        input_data = {
+            "key_1": "value_1",
+            "key_2": "value_2",
+            "key_3": "value_3"
+        }
+        expected_output = {
+            "value_1": "key_1",
+            "value_2": "key_2",
+            "value_3": "key_3"
+        }
+        self.assertEqual(reverse_map(input_data), expected_output)
 
     def test_unexpend_json_properties(self):
         input_data = {
