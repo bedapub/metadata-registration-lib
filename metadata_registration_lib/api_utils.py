@@ -58,22 +58,27 @@ def reverse_map(input_map):
     return {v: k for k, v in input_map.items()}
 
 
-def get_form_by_name(name, form_endpoint):
+def get_entity_by_name(name, endpoint):
     header = {"X-Fields": "name, id"}
-    forms_res = requests.get(form_endpoint, headers=header)
+    res = requests.get(endpoint, headers=header)
 
-    if forms_res.status_code != 200:
-        raise Exception(f"Fail to load all forms [{forms_res.status_code}] {forms_res.json()}")
+    if res.status_code != 200:
+        raise Exception(f"Fail to load all entities [{res.status_code}] {res.json()}")
 
     try:
-        form_entry = next(filter(lambda entry: entry["name"] == name, forms_res.json()))
-        form_json = requests.get(f"{form_endpoint}/id/{form_entry['id']}").json()
-        parser = JsonFlaskParser()
-        form_class = parser.to_form(form_json)[1]
-        return {"class": form_class, "json": form_json}
+        entity_entry = next(filter(lambda entry: entry["name"] == name, res.json()))
+        entity_json = requests.get(f"{endpoint}/id/{entity_entry['id']}").json()
+        return entity_json
 
     except StopIteration:
-        raise Exception(f"Fail to find form in database (name:{name})")
+        raise Exception(f"Fail to find entity in database (name:{name})")
+
+
+def get_form_by_name(name, form_endpoint):
+    form_json = get_entity_by_name(name, form_endpoint)
+    parser = JsonFlaskParser()
+    form_class = parser.to_form(form_json)[1]
+    return {"class": form_class, "json": form_json}
 
 
 def unexpend_json_properties(json_obj, key_name="property"):
