@@ -1,8 +1,7 @@
 from urllib.parse import urljoin
 import requests
 
-from metadata_registration_lib.api_utils import (map_key_value,
-    login_and_get_header, FormatConverter)
+from metadata_registration_lib.api_utils import login_and_get_header
 
 def post_study(study_data, host, email=None, password=None):
     """
@@ -34,17 +33,20 @@ def post_study(study_data, host, email=None, password=None):
     )
 
     # Format and send data to API
-    study_id = upload_study_related_entity(
+    study_json, message, success = upload_study_related_entity(
         data = study_data,
         url = endpoints["study"],
         method = "post",
         property_url = endpoints["property"],
         headers = headers
-    )[0]["id"]
+    )
 
-    print(f"Successfully registered study (id = {study_id})")
-
-    return study_id
+    if success:
+        print(f"Successfully registered study (id: {study_json['id']})")
+        return study_json["id"]
+    else:
+        print(f"Error during study upload: {study_json}")
+        return None
 
 
 def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None):
@@ -76,17 +78,20 @@ def add_dataset_to_study(dataset_data, study_id, host, email=None, password=None
     )
 
     # Format and send data to API
-    dataset_uuid = upload_study_related_entity(
+    dataset_json, message, success = upload_study_related_entity(
         data = dataset_data,
         url = f"{endpoints['study']}/id/{study_id}/datasets",
         method = "post",
         property_url = endpoints["property"],
         headers = headers
-    )[0]["uuid"]
+    )
 
-    print(f"Successfully added dataset to study (dataset uuid: {dataset_uuid})")
-
-    return dataset_uuid
+    if success:
+        print(f"Successfully added dataset to study (dataset uuid: {dataset_json['uuid']})")
+        return dataset_json["uuid"]
+    else:
+        print(f"Error during dataset upload: {dataset_json}")
+        return None
 
 
 def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=None, password=None):
@@ -118,17 +123,20 @@ def add_process_event_to_dataset(pe_data, study_id, dataset_uuid, host, email=No
     )
 
     # Format and send data to API
-    pe_uuid = upload_study_related_entity(
+    pe_json, message, success = upload_study_related_entity(
         data = pe_data,
         url = f"{endpoints['study']}/id/{study_id}/datasets/id/{dataset_uuid}/pes",
         method = "post",
         property_url = endpoints["property"],
         headers = headers
-    )[0]["uuid"]
+    )
 
-    print(f"Successfully added processing event to dataset (id: {pe_uuid})")
-
-    return pe_uuid
+    if success:
+        print(f"Successfully added processing event to study (pe uuid: {pe_json['uuid']})")
+        return pe_json["uuid"]
+    else:
+        print(f"Error during processing event upload: {pe_json}")
+        return None
 
 ###########################################
 ######## Helper functions
@@ -150,27 +158,15 @@ def api_get(url):
     return obj_res.json()
 
 def upload_study_related_entity(data, url, method, property_url, headers):
-    """Format and send data to the API (study related entity)"""
+    """Send data to the API (study related entity) in form format"""
 
-    # Format data (cleaning + conversion from "form format" to "api format")
-    prop_name_to_id = map_key_value(property_url, key="name", value="id")
-
-    converter = FormatConverter(mapper=prop_name_to_id)
-    converter.add_form_format(data["entries"])
-    converter.clean_data()
-
-    # Build API friendly data
-    api_data = {
-        "form_name": data["form_name"],
-        "entries": converter.get_api_format(),
-        "manual_meta_information": data.get("manual_meta_information", {})
-    }
-    if data.get("initial_state") is not None:
-        api_data["initial_state"] = data["initial_state"]
+    # Make sure POST data is set to form format
+    if method == "post" and not "entry_format" in data:
+        data["entry_format"] = "form"
 
     # Send data to API
     if method == "post":
-        res = requests.post(url=url, json=api_data, headers=headers)
+        res = requests.post(url=url, json=data, headers=headers)
         if res.status_code != 201:
             message = f"Failed to POST study related entity. {res.json()}"
             success = False
@@ -179,7 +175,7 @@ def upload_study_related_entity(data, url, method, property_url, headers):
             success = True
 
     elif method == "put":
-        res = requests.put(url=url, json=api_data, headers=headers)
+        res = requests.put(url=url, json=data, headers=headers)
         if res.status_code != 200:
             message = f"Failed to PUT study related entity. {res.json()}"
             success = False
