@@ -1,7 +1,8 @@
 from urllib.parse import urljoin
 import requests
 
-from metadata_registration_lib.api_utils import login_and_get_header
+from metadata_registration_lib.api_utils import (map_key_value,
+    login_and_get_header, FormatConverter)
 
 def post_study(study_data, host, email=None, password=None):
     """
@@ -159,10 +160,22 @@ def api_get(url):
 
 def upload_study_related_entity(data, url, method, property_url, headers):
     """Send data to the API (study related entity) in form format"""
+    entry_format = data.pop("entry_format", "form")
 
-    # Make sure POST data is set to form format
-    if method == "post" and not "entry_format" in data:
-        data["entry_format"] = "form"
+    # Format data (cleaning + conversion from "form format" to "api format")
+    if entry_format == "form":
+        prop_name_to_id = map_key_value(property_url, key="name", value="id")
+        converter = FormatConverter(mapper=prop_name_to_id)
+        converter.add_form_format(data["entries"])
+
+    elif entry_format == "api":
+        prop_id_to_name = map_key_value(property_url, key="id", value="name")
+        converter = FormatConverter(mapper=prop_id_to_name)
+        converter.add_api_format(data["entries"])
+
+    converter.clean_data()
+    data["entries"] = converter.get_api_format()
+    data["entry_format"] = "api"
 
     # Send data to API
     if method == "post":
@@ -184,3 +197,7 @@ def upload_study_related_entity(data, url, method, property_url, headers):
             success = True
 
     return (res.json(), message, success)
+
+
+
+
