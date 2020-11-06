@@ -80,7 +80,7 @@ class NormConverter:
         self.denorm_data = denorm_data
 
     def get_denorm_data_1_from_nested(
-        self, vars_to_denorm, use_parent_key=True, sep="."
+        self, vars_to_denorm, use_parent_key=True, sep=".", initial_parent_key=""
     ):
         if self.nested_data is None:
             raise Exception("'nested_data' needs to be set.")
@@ -94,8 +94,8 @@ class NormConverter:
 
         for d in input_data:
             # 1. Denormalize
+            tmp_denorm_data = [d]
             for var in vars_to_denorm:
-                tmp_denorm_data = [d]
                 new_denorm_data = []
                 for tmp_d in tmp_denorm_data:
                     new_denorm_data += denormalize_dict_one_var(tmp_d, var)
@@ -103,18 +103,29 @@ class NormConverter:
             # 2. Flatten
             for tmp_d in tmp_denorm_data:
                 flat_denorm_d = flatten_dict(
-                    tmp_d, parent_key="", sep=sep, use_parent_key=use_parent_key
+                    tmp_d,
+                    parent_key=initial_parent_key,
+                    sep=sep,
+                    use_parent_key=use_parent_key,
                 )
                 self.denorm_data.append(flat_denorm_d)
 
         return self.denorm_data
 
     def get_denorm_data_2_from_nested(
-        self, vars_to_denorm, use_parent_key=True, sep=".", missing_value=None
+        self,
+        vars_to_denorm,
+        use_parent_key=True,
+        sep=".",
+        initial_parent_key="",
+        missing_value=None,
     ):
         # 1. Get denormlized flat data
         denorm_data_1 = self.get_denorm_data_1_from_nested(
-            vars_to_denorm, use_parent_key=use_parent_key, sep=sep
+            vars_to_denorm,
+            use_parent_key=use_parent_key,
+            sep=sep,
+            initial_parent_key=initial_parent_key,
         )
 
         # 2. Get all possible keys
