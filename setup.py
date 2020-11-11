@@ -7,7 +7,11 @@ SOURCE_CODE_URL = "https://github.com/bedapub/metadata-registration-lib"
 
 module_path = os.path.dirname(__file__)
 
-with io.open(os.path.join(module_path, "metadata_registration_lib/__init__.py"), "rt", encoding="utf8") as f:
+with io.open(
+    os.path.join(module_path, "metadata_registration_lib/__init__.py"),
+    "rt",
+    encoding="utf8",
+) as f:
     version = re.search(r"__version__ = \"(.*?)\"", f.read()).group(1)
 
 with io.open(os.path.join(module_path, "./README.md"), "rt", encoding="utf8") as f:
@@ -26,10 +30,7 @@ setup(
     description="A library for the Study metadata registration tool",
     packages=find_packages(),
     long_description=LONG_DESCRIPTION,
-    install_requires=[
-        "requests",
-        "dynamic-form==0.3.1"
-    ],
+    install_requires=["requests", "dynamic-form==0.3.1", "xlsxwriter"],
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
@@ -37,9 +38,6 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     extra_require={
-        "dev": [
-            "unittest"
-        ],
-    }
-
+        "dev": ["unittest"],
+    },
 )
