@@ -42,9 +42,12 @@ def map_key_value(url, key="id", value="name"):
     res = requests.get(url, headers={"x-Fields": f"{key}, {value}"})
 
     if res.status_code != 200:
-        raise Exception(f"Request to {url} failed with key: {key} and value: {value}. {res.json()}")
+        raise Exception(
+            f"Request to {url} failed with key: {key} and value: {value}. {res.json()}"
+        )
 
     return {entry[key]: entry[value] for entry in res.json()}
+
 
 def reverse_map(input_map):
     """
@@ -122,7 +125,9 @@ class FormatConverter:
         4. list of dictionary (representing a list of FormField)
     """
 
-    def __init__(self, mapper: dict, key_name: str = "property", value_name: str = "value"):
+    def __init__(
+        self, mapper: dict, key_name: str = "property", value_name: str = "value"
+    ):
         """
         :param key_name: name under which the key the property id is stored
         :param value_name: name under which the user input is stored
@@ -135,8 +140,10 @@ class FormatConverter:
         self.entries = []
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} (key name: {self.key_name}, value name: {self.value_name}, " \
-               f"mapper: {self.mapper})>"
+        return (
+            f"<{self.__class__.__name__} (key name: {self.key_name}, value name: {self.value_name}, "
+            f"mapper: {self.mapper})>"
+        )
 
     def add_api_format(self, data):
         """
@@ -154,14 +161,20 @@ class FormatConverter:
         :param data: data in form format
         :return: self
         """
-        self.entries = [Entry(self).add_form_format(key=key, value=value) for key, value in data.items()]
+        self.entries = [
+            Entry(self).add_form_format(key=key, value=value)
+            for key, value in data.items()
+        ]
         return self
 
     def get_api_format(self):
         """
         :return: Returns data in api format
         """
-        return [{self.key_name: entry.prop_id, self.value_name: entry.get_api_format()} for entry in self.entries]
+        return [
+            {self.key_name: entry.prop_id, self.value_name: entry.get_api_format()}
+            for entry in self.entries
+        ]
 
     def get_form_format(self):
         """
@@ -213,7 +226,9 @@ class FormatConverter:
         3 possible input: list of entries, prop_names or prop_ids.
         """
         if len([1 for p in [entries, prop_names, prop_ids] if p is not None]) != 1:
-            raise Exception("Please give only one of the following: entries, prop_names, prop_ids")
+            raise Exception(
+                "Please give only one of the following: entries, prop_names, prop_ids"
+            )
 
         if entries is not None:
             to_remove = [e.prop_id for e in entries]
@@ -235,7 +250,6 @@ class FormatConverter:
 
 
 class Entry:
-
     def __init__(self, converter):
         self.converter = converter
 
@@ -257,12 +271,16 @@ class Entry:
             if type(value) in PRIMITIVES:  # simple value
                 return value
             elif isinstance(value, list):
-                if all(type(entry) in PRIMITIVES for entry in value):  # list of simple values
+                if all(
+                    type(entry) in PRIMITIVES for entry in value
+                ):  # list of simple values
                     # No weird format like mongoengine.base.datastructures.BaseList
                     return list(value)
                 elif all(isinstance(entry, dict) for entry in value):  # FormField
                     return NestedEntry(self.converter).add_api_format(value)
-                elif all(isinstance(entry, list) for entry in value):  # FieldList of FormField
+                elif all(
+                    isinstance(entry, list) for entry in value
+                ):  # FieldList of FormField
                     return NestedListEntry(self.converter).add_api_format(value)
 
         self.value = convert_value(data[self.converter.value_name])
@@ -320,17 +338,20 @@ class Entry:
         elif isinstance(self.value, NestedEntry):
             for entry in self.value.value:
                 entry.clean_data()
-            self.value.value = [entry for entry in self.value.value if keep_value(entry.value)]
+            self.value.value = [
+                entry for entry in self.value.value if keep_value(entry.value)
+            ]
 
         elif isinstance(self.value, NestedListEntry):
             for nested_entry in self.value.value:
                 for entry in nested_entry.value:
                     entry.clean_data()
-                nested_entry.value = [entry for entry in nested_entry.value if keep_value(entry.value)]
+                nested_entry.value = [
+                    entry for entry in nested_entry.value if keep_value(entry.value)
+                ]
 
 
 class NestedEntry:
-
     def __init__(self, converter):
         self.converter = converter
         self.value = None
@@ -343,13 +364,20 @@ class NestedEntry:
         return self
 
     def add_form_format(self, data):
-        self.value = [Entry(self.converter).add_form_format(key=key, value=value)
-                      for key, value in data.items()]
+        self.value = [
+            Entry(self.converter).add_form_format(key=key, value=value)
+            for key, value in data.items()
+        ]
         return self
 
     def get_api_format(self):
-        return [{self.converter.key_name: entry.prop_id, self.converter.value_name: entry.get_api_format()}
-                for entry in self.value]
+        return [
+            {
+                self.converter.key_name: entry.prop_id,
+                self.converter.value_name: entry.get_api_format(),
+            }
+            for entry in self.value
+        ]
 
     def get_form_format(self):
         return {entry.prop_name: entry.get_form_format() for entry in self.value}
@@ -363,7 +391,6 @@ class NestedEntry:
 
 
 class NestedListEntry:
-
     def __init__(self, converter):
         self.converter = converter
         self.value = None
@@ -376,7 +403,9 @@ class NestedListEntry:
         return self
 
     def add_form_format(self, data):
-        self.value = [NestedEntry(self.converter).add_form_format(item) for item in data]
+        self.value = [
+            NestedEntry(self.converter).add_form_format(item) for item in data
+        ]
         return self
 
     def get_api_format(self):
@@ -404,6 +433,7 @@ def clean_simple_value(value):
         return value.strip()
     else:
         return value
+
 
 def keep_value(value):
     if value == "":
