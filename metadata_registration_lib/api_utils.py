@@ -49,6 +49,13 @@ def map_key_value(url, key="id", value="name"):
     return {entry[key]: entry[value] for entry in res.json()}
 
 
+def map_key_value_from_dict_list(dict_list, key, value=None):
+    if value is not None:
+        return {entry[key]: entry[value] for entry in dict_list}
+    else:
+        return {entry[key]: entry for entry in dict_list}
+
+
 def reverse_map(input_map):
     """
     Reverse keys and values of dictionnary
