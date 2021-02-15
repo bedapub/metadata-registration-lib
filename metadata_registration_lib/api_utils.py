@@ -434,6 +434,19 @@ class NestedListEntry:
 
         raise Exception(f"Nested entry with {name} = '{value}' not found.")
 
+    def delete_nested_entry(self, name, value):
+        """
+        Deletes a specific nested "NestedEntry" based on the value of one
+        of its entries.
+        """
+        for i, nested_entry in enumerate(self.value):
+            entry_data = nested_entry.get_form_format()
+
+            if entry_data[name] == value:
+                del self.value[i]
+                return i
+
+        raise Exception(f"Nested entry with {name} = '{value}' not found.")
 
 def clean_simple_value(value):
     if isinstance(value, str):
