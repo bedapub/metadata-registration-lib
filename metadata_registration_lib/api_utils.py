@@ -396,6 +396,33 @@ class NestedEntry:
         else:
             return None
 
+    def remove_entries(self, entries=None, prop_names=None, prop_ids=None):
+        """
+        Remove specific entries.
+        3 possible input: list of entries, prop_names or prop_ids.
+        """
+        if len([1 for p in [entries, prop_names, prop_ids] if p is not None]) != 1:
+            raise Exception(
+                "Please give only one of the following: entries, prop_names, prop_ids"
+            )
+
+        if entries is not None:
+            to_remove = [e.prop_id for e in entries]
+            attribute = "prop_id"
+        elif prop_ids is not None:
+            to_remove = prop_ids
+            attribute = "prop_id"
+        elif prop_names is not None:
+            to_remove = prop_names
+            attribute = "prop_name"
+
+        cleaned_entries = []
+        for entry in self.value:
+            if not getattr(entry, attribute) in to_remove:
+                cleaned_entries.append(entry)
+
+        self.value = cleaned_entries
+        return self
 
 class NestedListEntry:
     def __init__(self, converter):
