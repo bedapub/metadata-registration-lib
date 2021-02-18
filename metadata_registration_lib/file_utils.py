@@ -13,7 +13,7 @@ def write_file_from_denorm_data_2(f, data, file_format):
     if file_format == "xlsx":
         wb = xlsxwriter.Workbook(f.name)
         bold = wb.add_format({"bold": True})
-        ws = wb.add_worksheet(f.name)
+        ws = wb.add_worksheet()
 
         col_num = 0
         for header, data_list in data.items():
