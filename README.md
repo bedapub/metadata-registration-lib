@@ -2,7 +2,12 @@
 A library for the Study metadata registration tool.
 
 ## Purpose
-This app is being developed as part of the Study Registration Tool prototype for the BiOmics team.
+This app is being developed as part of the Study Registration Tool prototype for the BiOmics team. It is used by the API, UI and directly by users.
+
+## Main functionalities
+- **API utils:** Helper code to simplify calls to the [Metadata Registration API](https://github.com/bedapub/metadata-registration-api) and convert formats.
+- **Data and file utils:** Data format conversion and helper to write denormalized files.
+- **ES utils:** Elastic Search helper functions to index/delete studies and more.
 
 ## Installation
 
