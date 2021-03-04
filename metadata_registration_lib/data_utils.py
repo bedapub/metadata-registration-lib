@@ -10,7 +10,7 @@ class NormConverter:
         - nested_data
             [
                 {
-                    "experiment_id": "EXP_1",
+                    "readout_id": "RDT_1",
                     "samples": [
                         {
                             "sample_id": "SAM_1",
@@ -23,7 +23,7 @@ class NormConverter:
                     ]
                 },
                 {
-                    "experiment_id": "EXP_2",
+                    "readout_id": "RDT_2",
                     "samples": [
                     {
                         "sample_id": "SAM_3",
@@ -35,14 +35,14 @@ class NormConverter:
         - flat_data_1
             [
                 {
-                    "experiment_id": "EXP_1",
+                    "readout_id": "RDT_1",
                     "sample_1__sample_id": "SAM_1",
                     "sample_1__treatment__treatment_id": "TRE_1",
                     "sample_2__sample_id": "SAM_2",
                     "sample_2__treatment__treatment_id": "TRE_2",
                 }
                 {
-                    "experiment_id": "EXP_2",
+                    "readout_id": "RDT_2",
                     "sample_1__sample_id": "SAM_3",
                     "sample_1__treatment__treatment_id": "TRE_3",
                 }
@@ -50,17 +50,17 @@ class NormConverter:
         - denorm_data_1
             [
                 {
-                    "experiment_id": "EXP_1",
+                    "readout_id": "RDT_1",
                     "sample__sample_id": "SAM_1",
                     "sample__treatment__treatment_id": "TRE_1",
                 }
                 {
-                    "experiment_id": "EXP_1",
+                    "readout_id": "RDT_1",
                     "sample__sample_id": "SAM_2",
                     "sample__treatment__treatment_id": "TRE_2",
                 }
                 {
-                    "experiment_id": "EXP_2",
+                    "readout_id": "RDT_2",
                     "sample__sample_id": "SAM_3",
                     "sample__treatment__treatment_id": "TRE_3",
                 }
@@ -68,7 +68,7 @@ class NormConverter:
 
         - denorm_data_2
             {
-                "expriment_id": ["EXP_1", "EXP_1", "EXP_2"],
+                "readout_id": ["RDT_1", "RDT_1", "RDT_2"],
                 "sample_id": ["SAM_1", "SAM_2", "SAM_3"],
                 "treatment_id": ["TRE_1", "TRE_2", "TRE_3"],
             }
