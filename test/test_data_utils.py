@@ -4,6 +4,7 @@ from metadata_registration_lib.data_utils import (
     flatten_dict,
     denormalize_dict_one_var,
     NormConverter,
+    expand_json_strings,
 )
 
 
@@ -95,4 +96,27 @@ class TestNormConverter(unittest.TestCase):
         output = converter.get_denorm_data_2_from_nested(
             vars_to_denorm=["g"], use_parent_key=True, missing_value=None
         )
+        self.assertEqual(output, expected_output)
+
+
+class TestJson(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input_data = {
+            "a": 123,
+            "b": {
+                "a": "abc",
+                "user_defined_json_data": '{"aaa":123, "bbb":"abc"}',
+            },
+            "user_defined_json_data": '{"aaa":456, "bbb":"def"}',
+        }
+
+    def test_expand_json_strings(self):
+        expected_output = {
+            "a": 123,
+            "b": {"a": "abc", "aaa": 123, "bbb": "abc"},
+            "aaa": 456,
+            "bbb": "def",
+        }
+        output = expand_json_strings(self.input_data)
         self.assertEqual(output, expected_output)

@@ -1,6 +1,7 @@
 from collections.abc import MutableMapping
 from collections import OrderedDict
 from copy import deepcopy
+import json
 
 
 class NormConverter:
@@ -184,3 +185,37 @@ def denormalize_dict_one_var(d, var):
         results.append(sub_d)
 
     return results
+
+
+def expand_json_strings(data, json_properties=["user_defined_json_data"]):
+    """
+    Expand JSON string properties as separate keys and values
+    Parameters:
+        - data: dict
+        - json_properties: list of JSON properties (value = JSON string)
+    """
+    new_data = deepcopy(data)
+
+    for key, value in data.items():
+        if key in json_properties:
+            try:
+                json_dict = json.loads(value)
+                assert isinstance(json_dict, MutableMapping)
+            except:
+                print(f"The JSON string is not a valid JSON object: {value}")
+                continue
+
+            new_data.pop(key)
+            for json_key, json_value in json_dict.items():
+                if not json_key in new_data:
+                    new_data[json_key] = json_value
+
+        elif isinstance(value, MutableMapping):
+            new_data[key] = expand_json_strings(value, json_properties)
+
+        elif isinstance(value, list):
+            for i, v in enumerate(value):
+                if isinstance(v, MutableMapping):
+                    new_data[key][i] = expand_json_strings(v, json_properties)
+
+    return new_data
