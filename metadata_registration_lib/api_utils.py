@@ -1,4 +1,5 @@
 import requests
+import uuid
 from dynamic_form import JsonFlaskParser
 
 PRIMITIVES = (bool, int, float, str)
@@ -424,6 +425,7 @@ class NestedEntry:
         self.value = cleaned_entries
         return self
 
+
 class NestedListEntry:
     def __init__(self, converter):
         self.converter = converter
@@ -475,6 +477,7 @@ class NestedListEntry:
 
         raise Exception(f"Nested entry with {name} = '{value}' not found.")
 
+
 def clean_simple_value(value):
     if isinstance(value, str):
         return value.strip()
@@ -487,3 +490,70 @@ def keep_value(value):
         return False
     else:
         return True
+
+
+def add_uuid_entry_if_missing(entity_converter, prop_name_to_id, replace=False):
+    entry_uuid = entity_converter.get_entry_by_name("uuid")
+    if entry_uuid is None:
+        new_uuid = str(uuid.uuid1())
+        entry_uuid = Entry(FormatConverter(prop_name_to_id)).add_form_format(
+            "uuid", new_uuid
+        )
+        entity_converter.entries.insert(0, entry_uuid)
+    elif entry_uuid is not None and replace:
+        new_uuid = str(uuid.uuid1())
+        entry_uuid.value = new_uuid
+    else:
+        new_uuid = entry_uuid.value
+
+    return entity_converter, new_uuid
+
+
+def get_entity_converter(
+    entries, entry_format, prop_id_to_name=None, prop_name_to_id=None
+):
+    if entry_format == "api":
+        entity_converter = FormatConverter(mapper=prop_id_to_name)
+        entity_converter.add_api_format(entries)
+    elif entry_format == "form":
+        entity_converter = FormatConverter(mapper=prop_name_to_id)
+        entity_converter.add_form_format(entries)
+
+    entity_converter.clean_data()
+    return entity_converter
+
+
+def add_entity_to_study_nested_list(
+    study_converter,
+    entries,
+    entry_format,
+    prop_id_to_name,
+    prop_name_to_id,
+    study_list_prop,
+):
+
+    # 1. Format and clean sample data
+    entity_converter = get_entity_converter(
+        entries, entry_format, prop_id_to_name, prop_name_to_id
+    )
+
+    # 2. Generate UUID
+    entity_converter, entity_uuid = add_uuid_entry_if_missing(
+        entity_converter, prop_name_to_id
+    )
+
+    entity_nested_entry = NestedEntry(entity_converter)
+    entity_nested_entry.value = entity_converter.entries
+
+    # 3. Check if study_list_prop entry already exist study, creates it if it doesn't
+    entities_entry = study_converter.get_entry_by_name(study_list_prop)
+
+    if entities_entry is not None:
+        entities_entry.value.value.append(entity_nested_entry)
+    else:
+        entities_entry = Entry(FormatConverter(prop_name_to_id)).add_form_format(
+            study_list_prop, [entity_nested_entry.get_form_format()]
+        )
+        study_converter.entries.append(entities_entry)
+
+    return study_converter, entity_converter, entity_uuid
