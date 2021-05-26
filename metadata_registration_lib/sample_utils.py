@@ -3,6 +3,7 @@ import abc
 import uuid
 import json
 import re
+import copy
 
 from metadata_registration_lib.other_utils import str_to_bool
 
@@ -554,3 +555,158 @@ class StepsSamples:
             if step.name_prefix == name_prefix:
                 return step
         raise Exception(f"Step name prefix '{name_prefix}' was not found")
+
+
+###################################################
+####### Other functions
+###################################################
+def get_step_entity_from_form_format(entity, step):
+    """
+    Input: entity in form format + step object
+    Output: sub-entity in form format without parent or nested entity
+    """
+    bare_entity = copy.deepcopy(entity)
+    if step.name == "sample":
+        bare_entity.pop("individual", None)
+        bare_entity.pop("treatment", None)
+
+    elif step.name == "treatment_sam":
+        bare_entity = bare_entity.get("treatment", None)
+
+    elif step.name == "individual":
+        bare_entity = bare_entity.get("individual", None)
+        if bare_entity is not None:
+            bare_entity.pop("treatment", None)
+
+    elif step.name == "treatment_ind":
+        bare_entity = bare_entity.get("individual", {}).get("treatment", None)
+
+    # For readouts, nothing to do
+
+    return bare_entity
+
+
+def update_sample_step_uuid(sample, step, step_uuid):
+    if step.name == "sample":
+        sample["uuid"] = step_uuid
+
+    elif step.name == "treatment_sam":
+        sample["treatment"]["uuid"] = step_uuid
+
+    elif step.name == "individual":
+        sample["individual"]["uuid"] = step_uuid
+
+    elif step.name == "treatment_ind":
+        sample["individual"]["treatment"]["uuid"] = step_uuid
+
+    return sample
+
+
+def unify_sample_entities_uuids(existing_samples, new_samples):
+    """
+    Goal: Re-use UUIDs from existing entities if they are identic
+    Parameters:
+        - existing_samples: list of dict (form format)
+        - new_samples: list of dict (form format)
+    Output:
+        - new_samples_updated: list of dict (form format)
+    """
+    new_samples_updated = []
+
+    # Structure to store and retrieve unique entities by UUID
+    unique_entities = []
+    index_to_uuid = {}
+
+    # Store existing entities with UUIDs
+    for sample in existing_samples:
+        for step in StepsSamples().steps:
+            bare_entity = get_step_entity_from_form_format(sample, step)
+
+            if bare_entity is None:
+                continue
+
+            if not bare_entity in unique_entities and "uuid" in bare_entity:
+                tmp_uuid = bare_entity.pop("uuid")
+                unique_entities.append(bare_entity)
+                index = len(index_to_uuid)
+                index_to_uuid[index] = tmp_uuid
+
+    # Update or create UUIDs of new samples
+    for sample in new_samples:
+        for step in StepsSamples().steps:
+            bare_entity = get_step_entity_from_form_format(sample, step)
+
+            if bare_entity is None:
+                continue
+
+            potential_uuid = bare_entity.pop("uuid", None)
+
+            if bare_entity in unique_entities:
+                index = unique_entities.index(bare_entity)
+                step_uuid = index_to_uuid[index]
+            else:
+                if potential_uuid is None:
+                    step_uuid = str(uuid.uuid1())
+                else:
+                    step_uuid = potential_uuid
+
+                unique_entities.append(bare_entity)
+                index = len(index_to_uuid)
+                index_to_uuid[index] = step_uuid
+
+            sample = update_sample_step_uuid(sample, step, step_uuid)
+
+        new_samples_updated.append(sample)
+
+    return new_samples_updated
+
+
+def validate_sample_against_form(sample, validate_dict, forms):
+    """
+    Performs validation of a sample (and its nested entities in form format) against forms
+    Returns
+        - validate (bool)
+        - error
+    """
+    validate = True
+    errors = []
+
+    for step in StepsSamples().steps:
+        validate_step = True
+        errors_step = []
+        bare_entity = get_step_entity_from_form_format(sample, step)
+
+        if bare_entity is None or not validate_dict[step.name]:
+            continue
+
+        form = forms[step.name]()
+
+        # Update entity format (ex: transform strings to booleans when needed)
+        # Conversion the other way around to fill JExcel in build_xxx_session_from_form_format
+        for field in form:
+            if field.name in bare_entity:
+                if field.type == "BooleanField":
+                    bare_entity[field.name] = str_to_bool(bare_entity[field.name])
+
+        form.process(data=bare_entity)
+
+        # Validate field by field
+        for field in form:
+            condition_1 = field.flags.required and not field.validate(form)
+            condition_2 = field.name in bare_entity and not field.validate(form)
+
+            if condition_1 or condition_2:
+                errors_step.append(
+                    f"Field '{field.name}' did not validate: {field.errors}"
+                )
+                validate_step = False
+                validate = False
+
+        if not validate_step:
+            error = f"Step '{step.name}' did not validate: {' / '.join(errors_step)}"
+            errors.append(error)
+    if not validate:
+        error_string = "ERR: " + " ERR: ".join(errors)
+        raise Exception(f"Sample {sample['uuid']} did not validate: {error_string}")
+
+    return validate, errors

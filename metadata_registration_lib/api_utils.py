@@ -519,8 +519,8 @@ def get_entity_converter(
         entity_converter = FormatConverter(mapper=prop_name_to_id)
         entity_converter.add_form_format(entries)
 
-    entity_converter.clean_data()
-    return entity_converter
+    discarded_entries = entity_converter.clean_data()
+    return entity_converter, discarded_entries
 
 
 def add_entity_to_study_nested_list(
