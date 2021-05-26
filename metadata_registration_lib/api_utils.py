@@ -525,27 +525,14 @@ def get_entity_converter(
 
 def add_entity_to_study_nested_list(
     study_converter,
-    entries,
-    entry_format,
-    prop_id_to_name,
+    entity_converter,
     prop_name_to_id,
     study_list_prop,
 ):
-
-    # 1. Format and clean sample data
-    entity_converter = get_entity_converter(
-        entries, entry_format, prop_id_to_name, prop_name_to_id
-    )
-
-    # 2. Generate UUID
-    entity_converter, entity_uuid = add_uuid_entry_if_missing(
-        entity_converter, prop_name_to_id
-    )
-
     entity_nested_entry = NestedEntry(entity_converter)
     entity_nested_entry.value = entity_converter.entries
 
-    # 3. Check if study_list_prop entry already exist study, creates it if it doesn't
+    # Check if study_list_prop entry already exist study, creates it if it doesn't
     entities_entry = study_converter.get_entry_by_name(study_list_prop)
 
     if entities_entry is not None:
@@ -556,4 +543,4 @@ def add_entity_to_study_nested_list(
         )
         study_converter.entries.append(entities_entry)
 
-    return study_converter, entity_converter, entity_uuid
+    return study_converter
