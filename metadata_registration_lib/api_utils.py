@@ -486,7 +486,7 @@ def clean_simple_value(value):
 
 
 def keep_value(value):
-    if value == "":
+    if value in ["", None]:
         return False
     else:
         return True
