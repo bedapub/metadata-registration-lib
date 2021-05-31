@@ -263,12 +263,51 @@ class Step(metaclass=abc.ABCMeta):
 
     def set_id_form_format_from_form_format(self, data):
         """data: list of dict in form format"""
+
+        # Check unicity of nested entities and their ids (not uuids)
+        wrong_entities = self.check_entities_unicity_with_ids(data)
+        if len(wrong_entities) > 0:
+            message = "Some entities IDs were not unique: "
+            message += " / ".join([f"{e['type']}: {e['id']}" for e in wrong_entities])
+            raise Exception(message)
+
         id_to_form_format = OrderedDict()
         for entity_dict in data:
             tmp_id = self.get_tmp_id(entity_dict)
             id_to_form_format[tmp_id] = entity_dict
 
         self.entity_set.id_to_form_format = id_to_form_format
+
+    def check_entities_unicity_with_ids(self, entities):
+        """
+        Goal: Make sure there are no different entities with the same ids
+        Parameters:
+            - entites: list of entities dict (form format)
+        Output:
+            - wrong_entities: list of dict: {id: xxx, type: xxx}
+                ==> List of entities having same ids while being different
+        """
+        wrong_entities = []
+
+        # Structure to store and retrieve unique entities by UUID
+        id_to_entity = {}
+
+        # Store existing entities with UUIDs
+        for entity in entities:
+            bare_entity = get_step_entity_from_form_format(entity, self.name, self)
+
+            if bare_entity is None:
+                continue
+
+            entity_id = bare_entity[self.prop_name_for_tmp_id]
+
+            if not entity_id in id_to_entity:
+                id_to_entity[entity_id] = bare_entity
+            else:
+                if id_to_entity[entity_id] != bare_entity:
+                    wrong_entities.append({"type": self.name, "id": entity_id})
+
+        return wrong_entities
 
 
 class StepTreatmentsInd(Step):
@@ -560,26 +599,38 @@ class StepsSamples:
 ###################################################
 ####### Other functions
 ###################################################
-def get_step_entity_from_form_format(entity, step):
+def get_step_entity_from_form_format(entity, entity_type, step):
     """
-    Input: entity in form format + step object
+    Input: entity in form format + entity_type (step name) + step object
     Output: sub-entity in form format without parent or nested entity
     """
     bare_entity = copy.deepcopy(entity)
-    if step.name == "sample":
-        bare_entity.pop("individual", None)
-        bare_entity.pop("treatment", None)
 
-    elif step.name == "treatment_sam":
-        bare_entity = bare_entity.get("treatment", None)
-
-    elif step.name == "individual":
-        bare_entity = bare_entity.get("individual", None)
-        if bare_entity is not None:
+    if entity_type == "sample":
+        if step.name == "sample":
+            bare_entity.pop("individual", None)
             bare_entity.pop("treatment", None)
 
-    elif step.name == "treatment_ind":
-        bare_entity = bare_entity.get("individual", {}).get("treatment", None)
+        elif step.name == "treatment_sam":
+            bare_entity = bare_entity.get("treatment", None)
+
+        elif step.name == "individual":
+            bare_entity = bare_entity.get("individual", None)
+            if bare_entity is not None:
+                bare_entity.pop("treatment", None)
+
+        elif step.name == "treatment_ind":
+            bare_entity = bare_entity.get("individual", {}).get("treatment", None)
+
+    elif entity_type in ["treatment_sam", "treatment_ind"]:
+        pass
+
+    elif entity_type == "individual":
+        if step.name == "individual":
+            bare_entity.pop("treatment", None)
+
+        elif step.name == "treatment_ind":
+            bare_entity = bare_entity.get("treatment", None)
 
     # For readouts, nothing to do
 
@@ -620,7 +671,7 @@ def unify_sample_entities_uuids(existing_samples, new_samples):
     # Store existing entities with UUIDs
     for sample in existing_samples:
         for step in StepsSamples().steps:
-            bare_entity = get_step_entity_from_form_format(sample, step)
+            bare_entity = get_step_entity_from_form_format(sample, "sample", step)
 
             if bare_entity is None:
                 continue
@@ -634,7 +685,7 @@ def unify_sample_entities_uuids(existing_samples, new_samples):
     # Update or create UUIDs of new samples
     for sample in new_samples:
         for step in StepsSamples().steps:
-            bare_entity = get_step_entity_from_form_format(sample, step)
+            bare_entity = get_step_entity_from_form_format(sample, "sample", step)
 
             if bare_entity is None:
                 continue
@@ -674,7 +725,7 @@ def validate_sample_against_form(sample, validate_dict, forms):
     for step in StepsSamples().steps:
         validate_step = True
         errors_step = []
-        bare_entity = get_step_entity_from_form_format(sample, step)
+        bare_entity = get_step_entity_from_form_format(sample, "sample", step)
 
         if bare_entity is None or not validate_dict[step.name]:
             continue
