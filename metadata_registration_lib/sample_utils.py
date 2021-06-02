@@ -440,6 +440,12 @@ class StepSamples(Step):
         super().__init__(*args, **kwargs)
 
 
+class StepSamplesOlims(StepSamples):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form_name = "sample_olims"
+
+
 class StepReadouts(Step):
     def __init__(self, *args, **kwargs):
         self.name = "readout"
