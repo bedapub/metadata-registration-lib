@@ -68,7 +68,7 @@ class EntitySet:
         self.jexcel_data = jexcel_data
         self.id_to_form_format = id_to_form_format
 
-    def validate_against_form(self, form, form_name):
+    def validate_against_form(self, form):
         """
         Performs validation of data (form format) against form
         id_to_form_format = {tmp_id: form_format_entity}
@@ -76,6 +76,7 @@ class EntitySet:
             - validate_all (bool)
             - errors_html (list of HTML strings): one per entity that did not validate
         """
+        form_name = form.__class__.__name__
         validate_all = True
         errors_html = []
         for tmp_id, entity_dict in self.id_to_form_format.items():
