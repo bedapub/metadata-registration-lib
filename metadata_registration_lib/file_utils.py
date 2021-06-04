@@ -1,5 +1,8 @@
 import csv
 import xlsxwriter
+import openpyxl
+import datetime
+import xlrd
 
 
 def write_file_from_denorm_data_2(f, data, file_format):
@@ -42,6 +45,9 @@ def write_file_from_denorm_data_2(f, data, file_format):
         raise Exception(f"Format '{file_format}' not supported")
 
 
+#################################################
+######## Read files as records
+#################################################
 def get_records_and_headers_from_csv(input_file, delimiter=","):
     """
     Returns a list of headers and a list of records {header:value}
@@ -113,3 +119,118 @@ def get_records_and_headers_from_excel(input_file):
 
     return headers, records
 
+
+#################################################
+######## Read files as list of rows
+#################################################
+def get_rows_from_file(
+    input_file, sheet_number=None, sheet_name=None, convert_to_str=True
+):
+    """Extract records from file as a list of dicts"""
+    # TODO: Read data from merged cells (so far None)
+    try:
+        workbook = openpyxl.load_workbook(
+            filename=input_file, read_only=True, data_only=True
+        )
+        mode = "xlsx"
+    except:
+        input_file.seek(0, 0)
+        workbook = xlrd.open_workbook(file_contents=input_file.read())
+        mode = "xls"
+
+    if sheet_number is not None:
+        sheet = find_sheet_by_number(workbook, sheet_number, mode)
+    elif sheet_name is not None:
+        sheet = find_sheet_by_name(workbook, sheet_name, mode)
+    else:
+        sheet = find_sheet_by_number(workbook, 0, mode)
+
+    # Read actual sample data
+    rows = []
+    for row in gen_rows_as_list(sheet, start_row=0, mode=mode):
+        if convert_to_str:
+            row = [str(v) for v in row]
+        rows.append(row)
+
+    if mode == "xlsx":
+        workbook.close()
+
+    return rows
+
+
+def find_sheet_by_number(workbook, number, mode="xlsx"):
+    """Find sheet in workbook by number"""
+    sheet = None
+
+    if mode == "xlsx":
+        sheet = workbook.worksheets[number]
+    elif mode == "xls":
+        sheet = workbook.sheet_by_index(number)
+
+    return sheet
+
+
+def find_sheet_by_name(workbook, name, mode="xlsx"):
+    """Find sheet in workbook by name"""
+    sheet = None
+
+    if mode == "xlsx":
+        sheet = workbook[name]
+    elif mode == "xls":
+        sheet = workbook.sheet_by_name(name)
+
+    return sheet
+
+
+def gen_rows_as_list(sheet, start_row, mode="xlsx"):
+    """Generator that yields rows as list"""
+    if mode == "xlsx":
+        for row in sheet.iter_rows(min_row=start_row, values_only=True):
+            yield list(row)
+
+    elif mode == "xls":
+        for row_num in range(start_row - 1, sheet.nrows):
+            yield sheet.row_values(row_num)
+
+
+def remove_empty_rows(rows, empty_values=[None, "", "None"]):
+    clean_rows = []
+    for row in rows:
+        if not all(v in [None, ""] for v in row):
+            clean_rows.append(row)
+    return clean_rows
+
+
+#################################################
+######## Write files
+#################################################
+def write_dict_list_xlsx(file, data, headers):
+    """
+    Write XLSX files
+    Parameters
+        - file: open file stream
+        - data: list of mappings
+        - headers: list of strings (headers)
+    """
+    wb = xlsxwriter.Workbook(file.name)
+    ws = wb.add_worksheet()
+
+    # Formats
+    f_header = wb.add_format({"bold": True})
+
+    # Write headers
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, f_header)
+
+    # Write data
+    for row_num, data_dict in enumerate(data, 1):
+
+        for col_num, header in enumerate(headers):
+            ws.write(row_num, col_num, data_dict.get(header, ""))
+
+    # Resize columns
+    for num_col, header in enumerate(headers):
+        width = len(header) * 0.95 if len(header) > 10 else len(header)
+        ws.set_column(num_col, num_col, width + 3)
+
+    wb.close()
