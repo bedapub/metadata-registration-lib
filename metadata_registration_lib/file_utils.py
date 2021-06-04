@@ -40,3 +40,76 @@ def write_file_from_denorm_data_2(f, data, file_format):
 
     else:
         raise Exception(f"Format '{file_format}' not supported")
+
+
+def get_records_and_headers_from_csv(input_file, delimiter=","):
+    """
+    Returns a list of headers and a list of records {header:value}
+    Columns with empty headers are ignored
+    """
+    lines = [l.decode("utf-8") for l in input_file.readlines()]
+
+    # Read headers
+    headers = next(csv.reader(lines, delimiter=delimiter))
+
+    # Remove empty headers
+    headers = [h for h in headers if h]
+
+    # Read records
+    reader = csv.DictReader(lines, delimiter=delimiter)
+
+    records = []
+    for record in reader:
+
+        for rec_header in record.keys():
+            # Remove values from columns with empty headers
+            if not rec_header:
+                record.pop(rec_header)
+        records.append(record)
+
+    return headers, records
+
+
+def get_records_and_headers_from_excel(input_file):
+    """
+    Returns a list of headers and a list of records {header:value}
+    Only the first sheet is read
+    Columns with empty headers are ignored
+    """
+    workbook = openpyxl.load_workbook(
+        filename=input_file, read_only=True, data_only=True
+    )
+    sheet = workbook.worksheets[0]
+
+    # Read headers
+    first_row = next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))
+    headers = list(first_row)
+
+    # Read records
+    records = []
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        record = {}
+
+        for col in range(len(headers)):
+            # Ignore values from empty headers
+            if headers[col]:
+                raw_value = row[col]
+
+                if type(raw_value) == datetime.datetime:
+                    value = raw_value.isoformat()
+                elif raw_value is None:
+                    value = ""
+                else:
+                    value = str(raw_value)
+
+                record[headers[col]] = value
+
+        records.append(record)
+
+    # Remove empty headers
+    headers = [h for h in headers if h]
+
+    workbook.close()
+
+    return headers, records
+
