@@ -36,7 +36,7 @@ def get_data_from_plate_rows(rows):
                     data.append(
                         OrderedDict(
                             {
-                                "Readout ID": "Readout {readout_num}",
+                                "Readout ID": f"Readout {readout_num}",
                                 "Sample ID": row[j],
                                 "Plate ID": plate_id,
                                 "Well ID": f"{row[0]}{j}",
