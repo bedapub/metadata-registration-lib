@@ -169,11 +169,8 @@ def get_rows_from_file(
 def unmerge_cells_in_sheet(sheet, mode):
     """Un-merge cells and copy the same value to all sub-cells"""
     if mode == "xlsx":
-        i = 0
         merged_cell_groups = [g for g in sheet.merged_cells.ranges]
         for cell_group in merged_cell_groups:
-            i += 1
-            print(i)
             min_col, min_row, max_col, max_row = openpyxl.utils.range_boundaries(
                 str(cell_group)
             )
