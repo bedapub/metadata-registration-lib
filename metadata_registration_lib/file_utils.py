@@ -124,13 +124,16 @@ def get_records_and_headers_from_excel(input_file):
 ######## Read files as list of rows
 #################################################
 def get_rows_from_file(
-    input_file, sheet_number=None, sheet_name=None, convert_to_str=True
+    input_file,
+    sheet_number=None,
+    sheet_name=None,
+    convert_to_str=True,
+    unmerge_cells=True,
 ):
     """Extract records from file as a list of dicts"""
-    # TODO: Read data from merged cells (so far None)
     try:
         workbook = openpyxl.load_workbook(
-            filename=input_file, read_only=True, data_only=True
+            filename=input_file, read_only=False, data_only=True
         )
         mode = "xlsx"
     except:
@@ -145,6 +148,10 @@ def get_rows_from_file(
     else:
         sheet = find_sheet_by_number(workbook, 0, mode)
 
+    # Handle merged cells
+    if unmerge_cells:
+        sheet = unmerge_cells_in_sheet(sheet, mode)
+
     # Read actual sample data
     rows = []
     for row in gen_rows_as_list(sheet, start_row=0, mode=mode):
@@ -156,6 +163,34 @@ def get_rows_from_file(
         workbook.close()
 
     return rows
+
+
+def unmerge_cells_in_sheet(sheet, mode):
+    """Un-merge cells and copy the same value to all sub-cells"""
+    if mode == "xlsx":
+        i = 0
+        merged_cell_groups = [g for g in sheet.merged_cells.ranges]
+        for cell_group in merged_cell_groups:
+            i += 1
+            print(i)
+            min_col, min_row, max_col, max_row = openpyxl.utils.range_boundaries(
+                str(cell_group)
+            )
+            top_left_cell_value = sheet.cell(row=min_row, column=min_col).value
+            # print(cell_group, top_left_cell_value)
+            sheet.unmerge_cells(str(cell_group))
+            for row in sheet.iter_rows(
+                min_col=min_col, min_row=min_row, max_col=max_col, max_row=max_row
+            ):
+                for cell in row:
+                    cell.value = top_left_cell_value
+    if mode == "xls":
+        # TODO: Implement unmerge for xls
+        raise NotImplementedError(
+            "unmerge_cells_in_sheet not implemented for mode = 'xls'"
+        )
+
+    return sheet
 
 
 def find_sheet_by_number(workbook, number, mode="xlsx"):
