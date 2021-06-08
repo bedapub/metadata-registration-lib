@@ -3,6 +3,7 @@ import xlsxwriter
 import openpyxl
 import datetime
 import xlrd
+import re
 
 
 def write_file_from_denorm_data_2(f, data, file_format):
@@ -195,26 +196,49 @@ def unmerge_cells_in_sheet(sheet, mode):
 
 def find_sheet_by_number(workbook, number, mode="xlsx"):
     """Find sheet in workbook by number"""
-    sheet = None
-
-    if mode == "xlsx":
-        sheet = workbook.worksheets[number]
-    elif mode == "xls":
-        sheet = workbook.sheet_by_index(number)
+    try:
+        if mode == "xlsx":
+            sheet = workbook.worksheets[number]
+        elif mode == "xls":
+            sheet = workbook.sheet_by_index(number)
+    except:
+        raise Exception(f"Sheet number {number} not found")
 
     return sheet
 
 
-def find_sheet_by_name(workbook, name, mode="xlsx"):
+def find_sheet_by_name(workbook, name, mode="xlsx", exact_match=False):
     """Find sheet in workbook by name"""
-    sheet = None
+    name_an = re.sub(r"[\W_]+", "", name).lower()
 
+    try:
+        for sheet_name in get_sheet_names(workbook, mode):
+            sheet_name_an = re.sub(r"[\W_]+", "", sheet_name).lower()
+
+            if exact_match and name_an == sheet_name_an:
+                return get_sheet_by_name(workbook, sheet_name, mode)
+            elif not exact_match and name_an in sheet_name_an:
+                return get_sheet_by_name(workbook, sheet_name, mode)
+
+        else:
+            raise Exception(f"Sheet name '{name}' not found")
+
+    except:
+        raise Exception(f"Sheet name '{name}' not found")
+
+
+def get_sheet_names(workbook, mode):
     if mode == "xlsx":
-        sheet = workbook[name]
+        return workbook.sheetnames
     elif mode == "xls":
-        sheet = workbook.sheet_by_name(name)
+        return workbook.sheet_names()
 
-    return sheet
+
+def get_sheet_by_name(workbook, sheet_name, mode):
+    if mode == "xlsx":
+        return workbook[sheet_name]
+    elif mode == "xls":
+        return workbook.sheet_by_name(sheet_name)
 
 
 def gen_rows_as_list(sheet, start_row, mode="xlsx"):
