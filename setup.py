@@ -30,7 +30,14 @@ setup(
     description="A library for the Study metadata registration tool",
     packages=find_packages(),
     long_description=LONG_DESCRIPTION,
-    install_requires=["requests", "dynamic-form", "xlsxwriter", "openpyxl", "xlrd"],
+    install_requires=[
+        "requests",
+        "dynamic-form",
+        "xlsxwriter",
+        "openpyxl",
+        "xlrd",
+        "xlwt",
+    ],
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
