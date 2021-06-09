@@ -15,51 +15,61 @@ def get_all_data_from_wba_plate_rows(rows):
         "quanterix_plates": OrderedDict(),
     }
 
-    existing_sample_ids = set()
     plate_id = "NOT FOUND"
     individual_id = "NOT FOUND"
+    sample_num = 0
     readout_num = 0
 
     rows_iter = iter(rows)
     for row in rows_iter:
         if row[0].lower().strip() == "plate":
             plate_id = row[1]
+
         elif row[0].lower().strip() == "donor":
             individual_id = row[1]
 
         elif "123456789101112" in "".join(row):
+            # Reset sample IDs for each plate as they are different samples
+            sample_name_to_id = {}
 
             for _ in range(0, 8):
                 row = next(rows_iter)
                 for j in range(1, 13):
-                    sample_id = row[j]
+                    sample_name = row[j]
 
-                    # Readouts data
-                    if not sample_id in [None, "None", ""]:
+                    if not sample_name in [None, "None", ""]:
+
+                        # Samples data
+                        if not sample_name in sample_name_to_id:
+                            sample_num += 1
+                            sample_id = f"S{sample_num} - {sample_name}"
+                            sample_name_to_id[sample_name] = sample_id
+                            data["samples"].append(
+                                OrderedDict(
+                                    {
+                                        "Sample ID (SAM)": sample_id,
+                                        "Individual ID (IND)": individual_id,
+                                        "Treatment ID (TRE > SAM)": sample_name,
+                                    }
+                                )
+                            )
+
+                        # Readouts data
                         readout_num += 1
                         data["readouts"].append(
                             OrderedDict(
                                 {
                                     "Readout ID": f"Readout {readout_num}",
-                                    "Sample ID": sample_id,
+                                    "Sample ID": sample_name_to_id[sample_name],
                                     "Plate ID": plate_id,
                                     "Well ID": f"{row[0]}{j}",
                                 }
                             )
                         )
 
-                        # Samples data
-                        if not sample_id in existing_sample_ids:
-                            data["samples"].append(
-                                OrderedDict(
-                                    {
-                                        "Sample ID (SAM)": sample_id,
-                                        "Individual ID (IND)": individual_id,
-                                        "Treatment ID (TRE > SAM)": sample_id,
-                                    }
-                                )
-                            )
-                            existing_sample_ids.add(sample_id)
+                    else:
+                        sample_name = ""
+                        sample_name_to_id[sample_name] = ""
 
                     # Quanterix template data
                     if not plate_id in data["quanterix_plates"]:
@@ -69,15 +79,12 @@ def get_all_data_from_wba_plate_rows(rows):
                             "data": [],
                         }
 
-                    if sample_id in [None, "None", ""]:
-                        sample_id = ""
-
                     data["quanterix_plates"][plate_id]["data"].append(
                         OrderedDict(
                             {
                                 "Row": row[0],
                                 "Column": j,
-                                "Name": sample_id,
+                                "Name": sample_name,
                                 "Dilution": "",
                             }
                         )
