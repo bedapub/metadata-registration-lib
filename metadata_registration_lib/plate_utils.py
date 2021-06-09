@@ -1,26 +1,31 @@
 from collections import OrderedDict
 
 
-def get_data_from_plate_rows(rows):
+def get_all_data_from_wba_plate_rows(rows):
     """
-    Get flat readouts data from a list of rows from a plate design file (rectangular layout)
+    Get flat data from a list of rows from a plate design file (rectangular layout)
     Parameter
         - rows (list of list): list of rows from a plate design file (rectangular layout)
     Returns
-        - data (list of OrderedDict): flat readouts data
+        - data (dict of list of OrderedDict): flat data for different kind of outputs
     """
-    data = []
+    data = {
+        "samples": [],
+        "readouts": [],
+        "quanterix_plates": OrderedDict(),
+    }
 
-    plate_id = None
+    existing_sample_ids = set()
+    plate_id = "NOT FOUND"
+    individual_id = "NOT FOUND"
     readout_num = 0
 
     rows_iter = iter(rows)
     for row in rows_iter:
-        if row[0].startswith("Plate") and not "Plate layout" in row[0]:
-            try:
-                plate_id = row[0].split(":")[0]
-            except:
-                pass
+        if row[0].lower().strip() == "plate":
+            plate_id = row[1]
+        elif row[0].lower().strip() == "donor":
+            individual_id = row[1]
 
         elif "123456789101112" in "".join(row):
 
@@ -29,19 +34,50 @@ def get_data_from_plate_rows(rows):
                 for j in range(1, 13):
                     sample_id = row[j]
 
-                    if sample_id in [None, "None", ""]:
-                        continue
+                    if not sample_id in [None, "None", ""]:
+                        readout_num += 1
+                        data["readouts"].append(
+                            OrderedDict(
+                                {
+                                    "Readout ID": f"Readout {readout_num}",
+                                    "Sample ID": sample_id,
+                                    "Plate ID": plate_id,
+                                    "Well ID": f"{row[0]}{j}",
+                                }
+                            )
+                        )
 
-                    readout_num += 1
-                    data.append(
+                        if not sample_id in existing_sample_ids:
+                            data["samples"].append(
+                                OrderedDict(
+                                    {
+                                        "Sample ID (SAM)": sample_id,
+                                        "Individual ID (IND)": individual_id,
+                                        "Treatment ID (TRE > SAM)": sample_id,
+                                    }
+                                )
+                            )
+                            existing_sample_ids.add(sample_id)
+
+                    if not plate_id in data["quanterix_plates"]:
+                        data["quanterix_plates"] = {
+                            "plate_id": plate_id,
+                            "donor": individual_id,
+                            "data": [],
+                        }
+
+                    data["quanterix_plates"]["data"].append(
                         OrderedDict(
                             {
-                                "Readout ID": f"Readout {readout_num}",
-                                "Sample ID": row[j],
-                                "Plate ID": plate_id,
-                                "Well ID": f"{row[0]}{j}",
+                                "Row": row[0],
+                                "Column": j,
+                                "Name": sample_id,
                             }
                         )
                     )
+
+            # Re-initialize these to make sure we see if these are not found for a certain plate
+            plate_id = "NOT FOUND"
+            individual_id = "NOT FOUND"
 
     return data
