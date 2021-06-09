@@ -3,6 +3,7 @@ import xlsxwriter
 import openpyxl
 import datetime
 import xlrd
+import xlwt
 import re
 
 
@@ -290,3 +291,35 @@ def write_dict_list_xlsx(file, data, headers):
         ws.set_column(num_col, num_col, width + 3)
 
     wb.close()
+
+
+def write_dict_list_xls(file, data, headers):
+    """
+    Write XLS (old) files
+    Parameters
+        - file: open file stream
+        - data: list of mappings
+        - headers: list of strings (headers)
+    """
+    wb = xlwt.Workbook()
+    ws = wb.add_sheet("Sheet 1")
+
+    # Formats
+    f_header = xlwt.easyxf("font: bold True;")
+
+    # Write headers
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, f_header)
+
+    # Write data
+    for row_num, data_dict in enumerate(data, 1):
+
+        for col_num, header in enumerate(headers):
+            ws.write(row_num, col_num, data_dict.get(header, ""))
+
+    # Resize columns
+    for num_col, header in enumerate(headers):
+        width = len(header) * 0.95 if len(header) > 10 else len(header)
+        ws.col(num_col).width = (width + 3) * 400
+
+    wb.save(file.name)
