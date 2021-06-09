@@ -34,6 +34,7 @@ def get_all_data_from_wba_plate_rows(rows):
                 for j in range(1, 13):
                     sample_id = row[j]
 
+                    # Readouts data
                     if not sample_id in [None, "None", ""]:
                         readout_num += 1
                         data["readouts"].append(
@@ -47,6 +48,7 @@ def get_all_data_from_wba_plate_rows(rows):
                             )
                         )
 
+                        # Samples data
                         if not sample_id in existing_sample_ids:
                             data["samples"].append(
                                 OrderedDict(
@@ -59,19 +61,24 @@ def get_all_data_from_wba_plate_rows(rows):
                             )
                             existing_sample_ids.add(sample_id)
 
+                    # Quanterix template data
                     if not plate_id in data["quanterix_plates"]:
-                        data["quanterix_plates"] = {
+                        data["quanterix_plates"][plate_id] = {
                             "plate_id": plate_id,
                             "donor": individual_id,
                             "data": [],
                         }
 
-                    data["quanterix_plates"]["data"].append(
+                    if sample_id in [None, "None", ""]:
+                        sample_id = ""
+
+                    data["quanterix_plates"][plate_id]["data"].append(
                         OrderedDict(
                             {
                                 "Row": row[0],
                                 "Column": j,
                                 "Name": sample_id,
+                                "Dilution": "",
                             }
                         )
                     )
