@@ -30,26 +30,34 @@ def get_all_data_from_wba_plate_rows(rows):
 
         elif "123456789101112" in "".join(row):
             # Reset sample IDs for each plate as they are different samples
-            sample_name_to_id = {}
+            tre_id_to_sam_id = {}
 
             for _ in range(0, 8):
                 row = next(rows_iter)
                 for j in range(1, 13):
-                    sample_name = row[j]
+                    cell_content = row[j]
 
-                    if not sample_name in [None, "None", ""]:
+                    if not cell_content in [None, "None", ""]:
+                        cell_split = [str(c).strip() for c in cell_content.split("//")]
+                        comp_name = cell_split[0]
+                        conc = cell_split[1] if len(cell_split) > 1 else ""
+                        conc_unit = cell_split[2] if len(cell_split) > 2 else ""
+                        treatment_id = " ".join(cell_split)
 
                         # Samples data
-                        if not sample_name in sample_name_to_id:
+                        if not treatment_id in tre_id_to_sam_id:
                             sample_num += 1
-                            sample_id = f"S{sample_num} - {sample_name}"
-                            sample_name_to_id[sample_name] = sample_id
+                            sample_id = f"S{sample_num} - {treatment_id}"
+                            tre_id_to_sam_id[treatment_id] = sample_id
                             data["samples"].append(
                                 OrderedDict(
                                     {
                                         "Sample ID (SAM)": sample_id,
                                         "Individual ID (IND)": individual_id,
-                                        "Treatment ID (TRE > SAM)": sample_name,
+                                        "Compound name (TRE > SAM)": comp_name,
+                                        "Concentration (TRE > SAM)": conc,
+                                        "Concentration Unit (TRE > SAM)": conc_unit,
+                                        "Treatment ID (TRE > SAM)": treatment_id,
                                     }
                                 )
                             )
@@ -60,7 +68,7 @@ def get_all_data_from_wba_plate_rows(rows):
                             OrderedDict(
                                 {
                                     "Readout ID": f"Readout {readout_num}",
-                                    "Sample ID": sample_name_to_id[sample_name],
+                                    "Sample ID": tre_id_to_sam_id[treatment_id],
                                     "Plate ID": plate_id,
                                     "Well ID": f"{row[0]}{j}",
                                 }
@@ -68,8 +76,8 @@ def get_all_data_from_wba_plate_rows(rows):
                         )
 
                     else:
-                        sample_name = ""
-                        sample_name_to_id[sample_name] = ""
+                        treatment_id = ""
+                        tre_id_to_sam_id[treatment_id] = ""
 
                     # Quanterix template data
                     if not plate_id in data["quanterix_plates"]:
@@ -84,7 +92,7 @@ def get_all_data_from_wba_plate_rows(rows):
                             {
                                 "Row": row[0],
                                 "Column": j,
-                                "Name": sample_name,
+                                "Name": treatment_id,
                                 "Dilution": "",
                             }
                         )
