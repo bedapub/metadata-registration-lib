@@ -1,3 +1,5 @@
+[![Black badge](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/bedapub/metadata-registration-lib)
+
 # Metadata Registration LIB
 A library for the Study metadata registration tool.
 
