@@ -324,7 +324,7 @@ def write_dict_list_xls(file, data, headers):
     # Resize columns
     for num_col, header in enumerate(headers):
         width = len(header) * 0.95 if len(header) > 10 else len(header)
-        ws.col(num_col).width = (width + 3) * 400
+        ws.col(num_col).width = int((width + 3) * 400)
 
     wb.save(file.name)
 

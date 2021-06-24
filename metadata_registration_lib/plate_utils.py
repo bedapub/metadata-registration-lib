@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 def get_all_data_from_wba_plate_rows(rows):
     """
+    *** WBA 96 well plates ***
     Get flat data from a list of rows from a plate design file (rectangular layout)
     Parameter
         - rows (list of list): list of rows from a plate design file (rectangular layout)
@@ -101,5 +102,110 @@ def get_all_data_from_wba_plate_rows(rows):
             # Re-initialize these to make sure we see if these are not found for a certain plate
             plate_id = "NOT FOUND"
             individual_id = "NOT FOUND"
+
+    return data
+
+
+def get_all_data_from_qpcr_plate_rows(rows):
+    """
+    *** qPCR 384 well plates ***
+    Get flat data from a list of rows from a plate design file (rectangular layout)
+    Parameter
+        - rows (list of list): list of rows from a plate design file (rectangular layout)
+    Returns
+        - data (dict of list of OrderedDict): flat data for different kind of outputs
+    """
+    data = {
+        "samples": [],
+        "readouts": [],
+        "quantstudio_plates": OrderedDict(),
+    }
+
+    plate_id = "NOT FOUND"
+    plate_num = 0
+    sample_num = 0
+    readout_num = 0
+    plate_well_num = 0
+
+    rows_iter = iter(rows)
+    for row in rows_iter:
+        if row[0].lower().strip() == "qpcr plate layout":
+            plate_num += 1
+            plate_id = str(plate_num)
+
+        # Plate start
+        elif "161718192021222324" in "".join(row) or "9101112131415" in "".join(row):
+            # Reset sample IDs for each plate as they are different samples
+            sample_name_to_id = {}
+
+            for _ in range(0, 16):
+                row = next(rows_iter)
+                for j in range(1, 25):
+                    cell_content = row[j]
+                    plate_well_num += 1
+
+                    if not cell_content in [None, "None", ""]:
+                        sample_name = cell_content
+
+                        # Samples data
+                        if not sample_name in sample_name_to_id:
+                            sample_num += 1
+                            sample_id = f"S{sample_num} - {sample_name}"
+                            sample_name_to_id[sample_name] = sample_id
+                            data["samples"].append(
+                                OrderedDict(
+                                    {
+                                        "Sample ID (SAM)": sample_id,
+                                    }
+                                )
+                            )
+
+                        # Readouts data
+                        readout_num += 1
+                        well_id = f"{row[0]}{j}"
+                        data["readouts"].append(
+                            OrderedDict(
+                                {
+                                    "Readout ID": f"Readout {readout_num}",
+                                    "Sample ID": sample_name_to_id[sample_name],
+                                    "Plate ID": plate_id,
+                                    "Well ID": well_id,
+                                }
+                            )
+                        )
+
+                    else:
+                        sample_name = ""
+                        sample_name_to_id[sample_name] = ""
+
+                    # QuantStudio template data
+                    if not plate_id in data["quantstudio_plates"]:
+                        data["quantstudio_plates"][plate_id] = {
+                            "plate_id": plate_id,
+                            "data": [],
+                        }
+
+                    data["quantstudio_plates"][plate_id]["data"].append(
+                        OrderedDict(
+                            {
+                                "": plate_well_num,
+                                "Well": well_id,
+                                "Sample Name": sample_name if sample_name else 0,
+                                "Sample Color": "",
+                                "Biogroup Name": "",
+                                "Biogroup Color": "",
+                                "Target Name": "",
+                                "Target Color": "",
+                                "Task": "",
+                                "Reporter": "",
+                                "Quencher": "",
+                                "Quantity": "",
+                                "Comments": "",
+                            }
+                        )
+                    )
+
+            # Re-initialize these to make sure we see if these are not found for a certain plate
+            plate_id = "NOT FOUND"
 
     return data
