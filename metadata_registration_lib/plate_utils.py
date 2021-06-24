@@ -35,8 +35,9 @@ def get_all_data_from_wba_plate_rows(rows):
 
             for _ in range(0, 8):
                 row = next(rows_iter)
-                for j in range(1, 13):
-                    cell_content = row[j]
+                for col_num in range(1, 13):
+                    cell_content = row[col_num]
+                    well_id = f"{row[0]}{col_num}"
 
                     if not cell_content in [None, "None", ""]:
                         cell_split = [str(c).strip() for c in cell_content.split("//")]
@@ -71,7 +72,7 @@ def get_all_data_from_wba_plate_rows(rows):
                                     "Readout ID": f"Readout {readout_num}",
                                     "Sample ID": tre_id_to_sam_id[treatment_id],
                                     "Plate ID": plate_id,
-                                    "Well ID": f"{row[0]}{j}",
+                                    "Well ID": well_id,
                                 }
                             )
                         )
@@ -92,7 +93,7 @@ def get_all_data_from_wba_plate_rows(rows):
                         OrderedDict(
                             {
                                 "Row": row[0],
-                                "Column": j,
+                                "Column": col_num,
                                 "Name": treatment_id,
                                 "Dilution": "",
                             }
@@ -127,22 +128,30 @@ def get_all_data_from_qpcr_plate_rows(rows):
     readout_num = 0
     plate_well_num = 0
 
+    # No need to reset samples for each plate
+    sample_name_to_id = {}
+
     rows_iter = iter(rows)
     for row in rows_iter:
         if row[0].lower().strip() == "qpcr plate layout":
             plate_num += 1
             plate_id = str(plate_num)
+            col_num_to_target_name = {}
+
+        if row[0].lower().strip() == "target name":
+            for col_num in range(1, 25):
+                col_num_to_target_name[col_num] = row[col_num]
 
         # Plate start
         elif "161718192021222324" in "".join(row) or "9101112131415" in "".join(row):
-            # Reset sample IDs for each plate as they are different samples
-            sample_name_to_id = {}
 
             for _ in range(0, 16):
                 row = next(rows_iter)
-                for j in range(1, 25):
-                    cell_content = row[j]
+                for col_num in range(1, 25):
                     plate_well_num += 1
+                    cell_content = row[col_num]
+                    well_id = f"{row[0]}{col_num}"
+                    target_name = col_num_to_target_name[col_num]
 
                     if not cell_content in [None, "None", ""]:
                         sample_name = cell_content
@@ -162,7 +171,6 @@ def get_all_data_from_qpcr_plate_rows(rows):
 
                         # Readouts data
                         readout_num += 1
-                        well_id = f"{row[0]}{j}"
                         data["readouts"].append(
                             OrderedDict(
                                 {
@@ -194,7 +202,7 @@ def get_all_data_from_qpcr_plate_rows(rows):
                                 "Sample Color": "",
                                 "Biogroup Name": "",
                                 "Biogroup Color": "",
-                                "Target Name": "",
+                                "Target Name": target_name,
                                 "Target Color": "",
                                 "Task": "",
                                 "Reporter": "",
