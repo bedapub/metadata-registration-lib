@@ -1,10 +1,14 @@
 import csv
-import xlsxwriter
-import openpyxl
 import datetime
-import xlrd
-import xlwt
+import os
 import re
+import zipfile
+from io import BytesIO
+
+import openpyxl
+import xlrd
+import xlsxwriter
+import xlwt
 
 
 def write_file_from_denorm_data_2(f, data, file_format):
@@ -323,3 +327,21 @@ def write_dict_list_xls(file, data, headers):
         ws.col(num_col).width = (width + 3) * 400
 
     wb.save(file.name)
+
+
+def get_memory_zip(output_dir, file_names_to_zip):
+    """
+    Creates a ZIP file in memory with the given files in output_dir
+    Parameters
+        - output_dir = tempfile.TemporaryDirectory instance
+        - file_names_to_zip = files to zip, names present at the root of output_dir
+    Output
+        - memory_zip_file = BytesIO() instance
+    """
+    memory_zip_file = BytesIO()
+    with zipfile.ZipFile(memory_zip_file, "w") as zf:
+        for file_name in file_names_to_zip:
+            os.chdir(output_dir.name)
+            zf.write(file_name, compress_type=zipfile.ZIP_DEFLATED)
+    memory_zip_file.seek(0)
+    return memory_zip_file
