@@ -150,7 +150,7 @@ def get_all_data_from_qpcr_plate_rows(rows):
                         # Samples data
                         if not sample_name in sample_name_to_id:
                             sample_num += 1
-                            sample_id = f"S{sample_num} - {sample_name}"
+                            sample_id = sample_name
                             sample_name_to_id[sample_name] = sample_id
                             data["samples"].append(
                                 OrderedDict(
