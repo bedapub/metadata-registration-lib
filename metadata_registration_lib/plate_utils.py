@@ -198,11 +198,11 @@ def get_all_data_from_qpcr_plate_rows(rows):
                             {
                                 "": plate_well_num,
                                 "Well": well_id,
-                                "Sample Name": sample_name if sample_name else 0,
+                                "Sample Name": sample_name if sample_name else "",
                                 "Sample Color": "",
                                 "Biogroup Name": "",
                                 "Biogroup Color": "",
-                                "Target Name": target_name,
+                                "Target Name": target_name if sample_name else "",
                                 "Target Color": "",
                                 "Task": "",
                                 "Reporter": "",
