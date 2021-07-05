@@ -1,6 +1,5 @@
 from collections.abc import MutableMapping
 from collections import OrderedDict
-from copy import deepcopy
 import json
 
 
@@ -195,7 +194,7 @@ def expand_json_strings(data, json_properties=["user_defined_json_data"]):
         - data: dict
         - json_properties: list of JSON properties (value = JSON string)
     """
-    new_data = deepcopy(data)
+    new_data = json.loads(json.dumps(data))
 
     for key, value in data.items():
         if key in json_properties:
