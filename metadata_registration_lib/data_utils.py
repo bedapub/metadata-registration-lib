@@ -176,11 +176,12 @@ def flatten_dict(d, use_parent_key=True, parent_key="", sep="."):
 def denormalize_dict_one_var(d, var):
     """
     Dupplicate dicts expending a specific list
-    d = {var=[...], ...}
+    d = {var=[x1, x2], ...} ==> results = [{var=x1, ...}, {var=x2, ...}]
     """
     results = []
     for value in d[var]:
-        sub_d = deepcopy(d)
+        # Alternative to deepcopy (faster with small dicts)
+        sub_d = json.loads(json.dumps(d))
         sub_d[var] = value
         results.append(sub_d)
 
