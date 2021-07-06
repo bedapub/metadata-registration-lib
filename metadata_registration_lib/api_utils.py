@@ -23,7 +23,7 @@ def login_and_get_header(login_url, use_token=True, email=None, password=None):
     return header
 
 
-def map_key_value(url, key="id", value="name"):
+def map_key_value(url, key="id", value="name", mask=None):
     """Call API at url endpoint and create a dict which maps key to value
 
     If the response contains identical keys, only the last value is stored for this key. The mapping only works
@@ -40,7 +40,12 @@ def map_key_value(url, key="id", value="name"):
     :rtype: dict
 
     """
-    res = requests.get(url, headers={"x-Fields": f"{key}, {value}"})
+    if mask is None:
+        headers = {"x-Fields": f"{key}, {value}"}
+    else:
+        headers = {"x-Fields": mask}
+
+    res = requests.get(url, headers=headers)
 
     if res.status_code != 200:
         raise Exception(
