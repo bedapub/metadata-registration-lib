@@ -35,6 +35,8 @@ def map_key_value(url, key="id", value="name", mask=None):
     :type key: str
     :param value: The value to which the key will map
     :type value: str
+    :param mask: Mask string to be used in the x-Fields header of the request
+    :type mask: str
     ...
     :return: A dict with maps key -> value
     :rtype: dict
