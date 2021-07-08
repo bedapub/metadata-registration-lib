@@ -129,7 +129,7 @@ def get_records_and_headers_from_excel(input_file):
 #################################################
 ######## Read files as list of rows
 #################################################
-def get_rows_from_file(
+def get_rows_from_excel_file(
     input_file,
     sheet_number=None,
     sheet_name=None,
@@ -160,7 +160,7 @@ def get_rows_from_file(
 
     # Read actual sample data
     rows = []
-    for row in gen_rows_as_list(sheet, start_row=0, mode=mode):
+    for row in gen_rows_as_list_from_excel_sheet(sheet, start_row=0, mode=mode):
         if convert_to_str:
             row = [str(v) for v in row]
         rows.append(row)
@@ -243,7 +243,7 @@ def get_sheet_by_name(workbook, sheet_name, mode):
         return workbook.sheet_by_name(sheet_name)
 
 
-def gen_rows_as_list(sheet, start_row, mode="xlsx"):
+def gen_rows_as_list_from_excel_sheet(sheet, start_row, mode="xlsx"):
     """Generator that yields rows as list"""
     if mode == "xlsx":
         for row in sheet.iter_rows(min_row=start_row, values_only=True):
