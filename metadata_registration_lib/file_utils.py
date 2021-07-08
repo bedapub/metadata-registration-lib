@@ -14,10 +14,14 @@ import xlwt
 def write_file_from_denorm_data_2(f, data, file_format):
     """
     Write a file from the denorm_data_2 format (see fata_utils.py)
-    Parameters
-    - f = open file streat
-    - data = data in denorm_data_2 format
-    - file_format = format of the exported file (xlsx, tsv or csv)
+
+    Args:
+        f (file): Input file (open stream)
+        data (dict): data in denorm_data_2 format
+        file_format (str): format of the exported file (xlsx, tsv or csv)
+
+    Raises:
+        Exception: Unsupported file_format
     """
     if file_format == "xlsx":
         wb = xlsxwriter.Workbook(f.name)
@@ -56,8 +60,17 @@ def write_file_from_denorm_data_2(f, data, file_format):
 #################################################
 def get_records_and_headers_from_csv(input_file, delimiter=","):
     """
-    Returns a list of headers and a list of records {header:value}
+    Read excel file file to return a list of headers and records
     Columns with empty headers are ignored
+
+    Args:
+        input_file (file): Input file (.xls or .xlsx)
+        delimiter (str): CSV separator
+
+    Returns:
+        tuple:
+            headers (list): Headers
+            records (list): List of records {header:value}
     """
     lines = [l.decode("utf-8") for l in input_file.readlines()]
 
@@ -84,9 +97,17 @@ def get_records_and_headers_from_csv(input_file, delimiter=","):
 
 def get_records_and_headers_from_excel(input_file):
     """
-    Returns a list of headers and a list of records {header:value}
+    Read excel file file to return a list of headers and records
     Only the first sheet is read
     Columns with empty headers are ignored
+
+    Args:
+        input_file (file): Input file (.xls or .xlsx)
+
+    Returns:
+        tuple:
+            headers (list): Headers
+            records (list): List of records {header:value}
     """
     workbook = openpyxl.load_workbook(
         filename=input_file, read_only=True, data_only=True
@@ -136,7 +157,20 @@ def get_rows_from_excel_file(
     convert_to_str=True,
     unmerge_cells=True,
 ):
-    """Extract records from file as a list of dicts"""
+    """
+    Extract records from file as a list of dicts
+
+    Args:
+        input_file (file): Input Excel file (.xls or .xlsx)
+        sheet_number (int, optional): Sheet number. Defaults to None.
+        sheet_name (str, optional): Sheet name. Defaults to None.
+        convert_to_str (bool, optional): Convert all values to strings if True.
+            Defaults to True.
+        unmerge_cells (bool, optional): Unmerge all cells if True. Defaults to True.
+
+    Returns:
+        list: Records list of dicts
+    """
     try:
         workbook = openpyxl.load_workbook(
             filename=input_file, read_only=False, data_only=True
@@ -172,7 +206,19 @@ def get_rows_from_excel_file(
 
 
 def unmerge_cells_in_sheet(sheet, mode):
-    """Un-merge cells and copy the same value to all sub-cells"""
+    """
+    Un-merge cells and copy the same value to all sub-cells
+
+    Args:
+        sheet (sheet): Excel sheet
+        mode (str): "xlsx" or "xls"
+
+    Raises:
+        NotImplementedError: Not implemented for .xls format
+
+    Returns:
+        sheet object: Sheet object with cells unmerged
+    """
     if mode == "xlsx":
         merged_cell_groups = [g for g in sheet.merged_cells.ranges]
         for cell_group in merged_cell_groups:
@@ -197,7 +243,20 @@ def unmerge_cells_in_sheet(sheet, mode):
 
 
 def find_sheet_by_number(workbook, number, mode="xlsx"):
-    """Find sheet in workbook by number"""
+    """
+    Find sheet in workbook by number
+
+    Args:
+        workbook (workbook): Input Workbook object
+        number (int): Desired sheet number
+        mode (str, optional): "xlsx" or "xls". Defaults to "xlsx".
+
+    Raises:
+        Exception: If sheet not found
+
+    Returns:
+        sheet: Sheet object
+    """
     try:
         if mode == "xlsx":
             sheet = workbook.worksheets[number]
@@ -210,7 +269,22 @@ def find_sheet_by_number(workbook, number, mode="xlsx"):
 
 
 def find_sheet_by_name(workbook, name, mode="xlsx", exact_match=False):
-    """Find sheet in workbook by name"""
+    """
+    Find sheet in workbook by name
+
+    Args:
+        workbook (workbook): Input Workbook object
+        name (str): Desired sheet name
+        mode (str, optional): "xlsx" or "xls". Defaults to "xlsx".
+        mode (bool, optional): If False, check if name is contained in sheet names.
+            Defaults to False.
+
+    Raises:
+        Exception: If sheet not found
+
+    Returns:
+        sheet: Sheet object
+    """
     name_an = re.sub(r"[\W_]+", "", name).lower()
 
     try:
@@ -230,6 +304,14 @@ def find_sheet_by_name(workbook, name, mode="xlsx", exact_match=False):
 
 
 def get_sheet_names(workbook, mode):
+    """
+    Args:
+        workbook (workbook): Workbook object
+        mode (str): "xlsx" or "xls".
+
+    Returns:
+        list: Sheet names
+    """
     if mode == "xlsx":
         return workbook.sheetnames
     elif mode == "xls":
@@ -237,6 +319,15 @@ def get_sheet_names(workbook, mode):
 
 
 def get_sheet_by_name(workbook, sheet_name, mode):
+    """
+    Args:
+        workbook (workbook): Workbook object
+        sheet_name (str): Sheet name
+        mode (str): "xlsx" or "xls".
+
+    Returns:
+        list: Sheet names
+    """
     if mode == "xlsx":
         return workbook[sheet_name]
     elif mode == "xls":
@@ -244,7 +335,18 @@ def get_sheet_by_name(workbook, sheet_name, mode):
 
 
 def gen_rows_as_list_from_excel_sheet(sheet, start_row, mode="xlsx"):
-    """Generator that yields rows as list"""
+    """
+    Generator that yields rows as list
+
+    Args:
+        sheet (sheet): Excel sheet object
+        start_row (int): Starting row
+        mode (str, optional): "xlsx" or "xls". Defaults to "xlsx".
+
+    Yields:
+        list: Row as list
+    """
+
     if mode == "xlsx":
         for row in sheet.iter_rows(min_row=start_row, values_only=True):
             yield list(row)
@@ -255,9 +357,20 @@ def gen_rows_as_list_from_excel_sheet(sheet, start_row, mode="xlsx"):
 
 
 def remove_empty_rows(rows, empty_values=[None, "", "None"]):
+    """
+    Removes empty rows from input
+
+    Args:
+        rows (iterable): Input rows
+        empty_values (list, optional): What is considered Empty.
+            Defaults to [None, "", "None"].
+
+    Returns:
+        list: Cleaned rows
+    """
     clean_rows = []
     for row in rows:
-        if not all(v in [None, ""] for v in row):
+        if not all(v in empty_values for v in row):
             clean_rows.append(row)
     return clean_rows
 
@@ -268,10 +381,11 @@ def remove_empty_rows(rows, empty_values=[None, "", "None"]):
 def write_dict_list_xlsx(file, data, headers):
     """
     Write XLSX files
-    Parameters
-        - file: open file stream
-        - data: list of mappings
-        - headers: list of strings (headers)
+
+    Args:
+        file (file): Open file stream
+        data (list): Data to write as list of mappings
+        headers (list): list of strings (headers)
     """
     wb = xlsxwriter.Workbook(file.name)
     ws = wb.add_worksheet()
@@ -300,10 +414,11 @@ def write_dict_list_xlsx(file, data, headers):
 def write_dict_list_xls(file, data, headers):
     """
     Write XLS (old) files
-    Parameters
-        - file: open file stream
-        - data: list of mappings
-        - headers: list of strings (headers)
+
+    Args:
+        file (file): Open file stream
+        data (list): Data to write as list of mappings
+        headers (list): list of strings (headers)
     """
     wb = xlwt.Workbook()
     ws = wb.add_sheet("Sheet 1")
@@ -332,11 +447,13 @@ def write_dict_list_xls(file, data, headers):
 def get_memory_zip(output_dir, file_names_to_zip):
     """
     Creates a ZIP file in memory with the given files in output_dir
-    Parameters
-        - output_dir = tempfile.TemporaryDirectory instance
-        - file_names_to_zip = files to zip, names present at the root of output_dir
-    Output
-        - memory_zip_file = BytesIO() instance
+
+    Args:
+        output_dir (tempfile.TemporaryDirectory): Output directory
+        file_names_to_zip (iterable): Relative file names to zip inside output_dir
+
+    Returns:
+        BytesIO: ZIPed file in memory
     """
     memory_zip_file = BytesIO()
     with zipfile.ZipFile(memory_zip_file, "w") as zf:
