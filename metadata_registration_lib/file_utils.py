@@ -147,6 +147,93 @@ def get_records_and_headers_from_excel(input_file):
     return headers, records
 
 
+def get_records_and_headers_from_fluidigm_plt(input_file):
+    """
+    Read .plt file to return a list of headers and records
+    .plt is an XML format generated from the Fluidigm software
+
+    Args:
+        input_file (file): Input file
+
+    Returns:
+        tuple:
+            headers (list): Headers
+            records (list): List of records {header:value}
+    """
+
+    raise NotImplementedError("Fluidigm .plt XML format is not implemented yet")
+
+    # from lxml import etree
+
+    # element.tag
+    # element.attrib
+    # element.nsmap
+    # element.prefix
+    # element.text
+
+    ########## WHERE TO FIND WHAT?
+
+    #### WELL
+    # <a2:ContainerWell id="ref-579" xmlns:a2="http://schemas.microsoft.com/clr/nsassem/Fluidigm.BioMark.DataModel.Dispensing/DataModel%2C%20Version%3D1.1.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+    #    <type>Any</type>
+    #    <strLabel id="ref-1000">B10</strLabel> <== Well ID
+    #    <nColumnIndex>10</nColumnIndex>
+    #    <strRowIndex href="#ref-977"/>
+    #    <nRowNumericIndex>2</nRowNumericIndex>
+    #    <index>22</index>
+    # </a2:ContainerWell>
+
+    # root = etree.parse(input_file).getroot()
+    # print("TAG >", root.tag)
+    # print("ATTRIB >", root.attrib)
+    # print("NAMESPACE >", root.nsmap)
+
+    # for child in root:
+    #     print("-- TAG >", child.tag)
+    #     print("-- ATTRIB >", child.attrib)
+    #     print("-- NAMESPACE >", child.nsmap)
+
+    #     # Example: Find all Detector names
+    #     for child2 in child:
+    #         if child2.tag.endswith("Detector"):
+    #             print("\t-- END TAG >", child2.tag.split("}")[-1])
+    #             # print("\t-- ATTRIB >", child2.attrib)
+    #             # print("\t-- NAMESPACE >", child2.nsmap)
+
+    #             for child3 in child2:
+    #                 print("\t\t-- TAG = ", child3.tag)
+    #                 if child3.tag == "Name":
+    #                     print("\t\t\tText = ", child3.text)
+
+    # TODO: Figure out how findall work
+    # print(root.findall("WellContent"))
+    # print(root.findall("SOAP-ENC:arrayType", root.nsmap))
+    # print(root.findall("arrayType", root.nsmap))
+
+    # headers_map = {}
+
+    # headers = []
+    # records = []
+
+    # return headers, records
+
+
+def get_records_and_headers_from_fluidigm_csv(input_file, delimiter=","):
+    """
+    Read CSV file from Fluidigm to return a list of headers and records
+
+    Args:
+        input_file (file): Input file (.xls or .xlsx)
+        delimiter (str): CSV separator
+
+    Returns:
+        tuple:
+            headers (list): Headers
+            records (list): List of records {header:value}
+    """
+    raise NotImplementedError("Fluidigm .csv format is not implemented yet")
+
+
 #################################################
 ######## Read files as list of rows
 #################################################
