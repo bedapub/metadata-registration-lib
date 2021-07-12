@@ -231,7 +231,51 @@ def get_records_and_headers_from_fluidigm_csv(input_file, delimiter=","):
             headers (list): Headers
             records (list): List of records {header:value}
     """
-    raise NotImplementedError("Fluidigm .csv format is not implemented yet")
+    lines = [l.decode("utf-8") for l in input_file.readlines()]
+    reader_headers = csv.reader(lines[10:12], delimiter=delimiter)
+
+    # Read headers (on 2 lines)
+    headers = []
+    headers_1 = next(reader_headers)
+    headers_2 = next(reader_headers)
+
+    for header_tuple in zip(headers_1, headers_2):
+        header = " ".join([h for h in header_tuple if not h in ("", None)])
+        headers.append(header)
+
+    # Remove empty headers
+    headers = [h for h in headers if h]
+
+    headers_map = {
+        "Chamber ID": "Readout ID",
+        "Sample Name": "Sample IDs",
+        "Sample Type": "Sample type",
+        "Sample rConc": "Dilution",
+        "FAM-MGB Name": "qPCR Assay (Target name)",
+        "FAM-MGB Type": "Experiment Type",
+        "Ct Value": "Ct Value",
+        "Ct Calibrated rConc": "Ct Calibrated rConc",
+        "Ct Quality": "Ct Quality",
+        "Ct Call": "Ct Call",
+        "Ct Threshold": "Ct Threshold",
+        "Defined Comments": "Readout comment",
+    }
+
+    headers_mapped = [headers_map.get(h, h) for h in headers if h in headers_map]
+
+    # Read records
+    reader = csv.DictReader(lines[12:], fieldnames=headers_mapped, delimiter=delimiter)
+
+    records = []
+    for record in reader:
+
+        for rec_header in record.keys():
+            # Remove values from columns with empty headers
+            if not rec_header:
+                record.pop(rec_header)
+        records.append(record)
+
+    return headers_mapped, records
 
 
 #################################################
