@@ -251,7 +251,7 @@ def get_records_and_headers_from_fluidigm_csv(input_file, delimiter=","):
         "Sample Name": "Sample IDs",
         "Sample Type": "Sample type",
         "Sample rConc": "Dilution",
-        "FAM-MGB Name": "qPCR Assay (Target name)",
+        "FAM-MGB Name": "qPCR assay",
         "FAM-MGB Type": "Experiment Type",
         "Ct Value": "Ct Value",
         "Ct Calibrated rConc": "Ct Calibrated rConc",
