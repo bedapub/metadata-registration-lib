@@ -263,6 +263,38 @@ class FormatConverter:
         self.entries = cleaned_entries
         return self
 
+    def sort_from_form(self, form):
+        """
+        Sort entries according to the form fields (first level only)
+
+        Priority 1. ID or UUID
+        Priority 2. Form fields
+        Priority 3. Other fields not present in form (e.g. nested entities)
+
+        :param form: form instance used to define the order of entries
+        :return: self
+        """
+        sorted_entries = []
+        used_names = set()
+
+        # Priority 1.
+        # Included in forms
+
+        # Priority 2.
+        for field in form:
+            entry = self.get_entry_by_name(field.name)
+            if entry is not None:
+                sorted_entries.append(entry)
+                used_names.add(field.name)
+
+        # Priority 3.
+        for entry in self.entries:
+            if not entry.prop_name in used_names:
+                sorted_entries.append(entry)
+
+        self.entries = sorted_entries
+        return self
+
 
 class Entry:
     def __init__(self, converter):
