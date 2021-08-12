@@ -1,6 +1,6 @@
 requests==2.22.0
-dynamic-form==0.3.2
-# -e git+https://github.com/bedapub/dynamic-form.git@master#egg=dynamic-form
+# dynamic-form==0.3.2
+-e git+https://github.com/bedapub/dynamic-form.git@master#egg=dynamic-form
 xlsxwriter
 openpyxl
 xlrd
