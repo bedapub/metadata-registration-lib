@@ -76,6 +76,21 @@ def reverse_map(input_map):
     return {v: k for k, v in input_map.items()}
 
 
+def get_prop_name_to_cv_name(property_url):
+    prop_name_to_value_type = map_key_value(
+        url=property_url,
+        key="name",
+        value="value_type",
+        mask="name, value_type{data_type, controlled_vocabulary{name}}",
+    )
+    prop_name_to_cv_name = {
+        p_name: prop_name_to_value_type[p_name]["controlled_vocabulary"]["name"]
+        for p_name in prop_name_to_value_type.keys()
+        if prop_name_to_value_type[p_name]["data_type"] == "ctrl_voc"
+    }
+    return prop_name_to_cv_name
+
+
 def get_entity_by_name(name, endpoint):
     header = {"X-Fields": "name, id"}
     res = requests.get(endpoint, headers=header)

@@ -1,7 +1,7 @@
 import json
 import requests
 
-from metadata_registration_lib.api_utils import map_key_value
+from metadata_registration_lib.api_utils import map_key_value, get_prop_name_to_cv_name
 
 
 def get_nb_pages(nb_hits, es_size):
@@ -39,7 +39,7 @@ def get_es_auth(es_config):
         return None
 
 
-def index_study(es_index_url, es_auth, study_data, action, cv_url):
+def index_study(es_index_url, es_auth, study_data, action, endpoints):
     """Index or update a study on the ES server"""
     headers = {"Content-type": "application/json"}
     study_id = study_data["id"]
@@ -54,8 +54,9 @@ def index_study(es_index_url, es_auth, study_data, action, cv_url):
     del study_data["meta_information"]
 
     # Replace properties CV values by expended items
-    cv_items_expended = get_cv_items_expended_for_indexing(cv_url)
-    study_data = expend_cv_values(study_data, cv_items_expended)
+    cv_items_expended = get_cv_items_expended_for_indexing(endpoints["cv"])
+    prop_name_to_cv_name = get_prop_name_to_cv_name(endpoints["prop"])
+    study_data = expend_cv_values(study_data, cv_items_expended, prop_name_to_cv_name)
 
     if action == "add":
         res = requests.post(
@@ -105,25 +106,28 @@ def get_cv_items_expended_for_indexing(cv_url):
     return cv_items_map
 
 
-def expend_cv_values(study, cv_items_expended):
+def expend_cv_values(study, cv_items_expended, prop_name_to_cv_name):
     for prop_name, value in study.items():
-        if prop_name in cv_items_expended:
+        if prop_name in prop_name_to_cv_name:
+            cv_name = prop_name_to_cv_name[prop_name]
             try:
                 if type(value) == list:
                     study[prop_name] = " // ".join(
-                        [cv_items_expended[prop_name][v] for v in value]
+                        [cv_items_expended[cv_name][v] for v in value]
                     )
                 else:
-                    study[prop_name] = cv_items_expended[prop_name][value]
+                    study[prop_name] = cv_items_expended[cv_name][value]
             except:
                 print(f"\tFailed to expand {value} for property {prop_name} in study")
         elif type(value) == dict:
-            value = expend_cv_values(value, cv_items_expended)
+            value = expend_cv_values(value, cv_items_expended, prop_name_to_cv_name)
         elif type(value) == list:
             for nested_value in value:
                 if type(nested_value) == dict:
-                    nested_value = expend_cv_values(nested_value, cv_items_expended)
+                    nested_value = expend_cv_values(
+                        nested_value, cv_items_expended, prop_name_to_cv_name
+                    )
                 elif prop_name in cv_items_expended:
-                    nested_value = cv_items_expended[prop_name][nested_value]
+                    nested_value = cv_items_expended[cv_name][nested_value]
 
     return study
