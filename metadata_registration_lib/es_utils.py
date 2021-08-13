@@ -107,18 +107,32 @@ def get_cv_items_expended_for_indexing(cv_url):
 
 
 def expend_cv_values(study, cv_items_expended, prop_name_to_cv_name):
+    def get_expended_item(cv_items, value):
+        # If value is a CV item name
+        if value in cv_items.keys():
+            return cv_items[value]
+        # If value is a CV item synonym
+        else:
+            for item_name, item_expended in cv_items.items():
+                if value in item_expended:
+                    return cv_items[item_name]
+            raise Exception("Value not found in item names or synonyms")
+
     for prop_name, value in study.items():
         if prop_name in prop_name_to_cv_name:
             cv_name = prop_name_to_cv_name[prop_name]
+            cv_items = cv_items_expended[cv_name]
             try:
                 if type(value) == list:
                     study[prop_name] = " // ".join(
-                        [cv_items_expended[cv_name][v] for v in value]
+                        [get_expended_item(cv_items, v) for v in value]
                     )
                 else:
-                    study[prop_name] = cv_items_expended[cv_name][value]
-            except:
-                print(f"\tFailed to expand {value} for property {prop_name} in study")
+                    study[prop_name] = get_expended_item(cv_items, value)
+            except Exception as e:
+                print(
+                    f"\tFailed to expand {value} for property {prop_name} in study: {e}"
+                )
         elif type(value) == dict:
             value = expend_cv_values(value, cv_items_expended, prop_name_to_cv_name)
         elif type(value) == list:
