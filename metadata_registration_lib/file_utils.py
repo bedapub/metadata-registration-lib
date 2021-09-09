@@ -130,6 +130,16 @@ def get_records_and_headers_from_excel(input_file):
 
                 if type(raw_value) == datetime.datetime:
                     value = raw_value.isoformat()
+
+                elif type(raw_value) == float:
+                    # Trick to round floating points of style 0.009600000000000001 or 0.5599999999999999
+                    raw_value_str = str(raw_value)
+                    for char in ["0", "9"]:
+                        if char * 8 in raw_value_str:
+                            index = raw_value_str.find(char * 8)
+                            raw_value = round(raw_value, index + 7)
+                    value = str(raw_value)
+
                 elif raw_value is None:
                     value = ""
                 else:
