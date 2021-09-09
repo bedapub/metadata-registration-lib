@@ -10,6 +10,8 @@ import xlrd
 import xlsxwriter
 import xlwt
 
+from metadata_registration_lib.other_utils import fix_float_issue
+
 
 def write_file_from_denorm_data_2(f, data, file_format):
     """
@@ -132,12 +134,7 @@ def get_records_and_headers_from_excel(input_file):
                     value = raw_value.isoformat()
 
                 elif type(raw_value) == float:
-                    # Trick to round floating points of style 0.009600000000000001 or 0.5599999999999999
-                    raw_value_str = str(raw_value)
-                    for char in ["0", "9"]:
-                        if char * 8 in raw_value_str:
-                            index = raw_value_str.find(char * 8)
-                            raw_value = round(raw_value, index + 7)
+                    raw_value = fix_float_issue(raw_value)
                     value = str(raw_value)
 
                 elif raw_value is None:
