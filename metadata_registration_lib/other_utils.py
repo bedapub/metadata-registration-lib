@@ -1,18 +1,17 @@
-from decimal import Decimal
+from math import floor, log10
 
 
 def str_to_bool(s):
     return s.lower() in ["true", "1", "y", "yes", "on", "t"]
 
 
-def fix_float_issue(f):
+def fix_float_issue(x):
     """
+    Round to 15 significant numbers
+    See related tests for expected behaviour
     Trick to round floating points of style 0.009600000000000001 or 0.5599999999999999
     """
-    # f_str = str(f)
-    # for char in ["0", "9"]:
-    #     if char * 8 in f_str:
-    #         index = f_str.find(char * 8)
-    #         return round(f, index + 7)
-    dec = Decimal(str(f)).quantize(Decimal("1.000000000000"))
-    return float(dec)
+    # dec = Decimal(str(x)).quantize(Decimal("1.000000000000"))
+    dec = round(x, 15 - int(floor(log10(abs(x)))) - 1)
+
+    return dec
