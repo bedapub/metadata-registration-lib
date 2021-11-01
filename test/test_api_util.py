@@ -1,21 +1,16 @@
 import unittest
 
-from metadata_registration_lib.api_utils import (FormatConverter,
-    unexpend_json_properties, reverse_map)
+from metadata_registration_lib.api_utils import (
+    FormatConverter,
+    unexpend_json_properties,
+    reverse_map,
+)
+
 
 class TestSimpleFunctions(unittest.TestCase):
-
     def test_reverse_map(self):
-        input_data = {
-            "key_1": "value_1",
-            "key_2": "value_2",
-            "key_3": "value_3"
-        }
-        expected_output = {
-            "value_1": "key_1",
-            "value_2": "key_2",
-            "value_3": "key_3"
-        }
+        input_data = {"key_1": "value_1", "key_2": "value_2", "key_3": "value_3"}
+        expected_output = {"value_1": "key_1", "value_2": "key_2", "value_3": "key_3"}
         self.assertEqual(reverse_map(input_data), expected_output)
 
     def test_unexpend_json_properties(self):
@@ -35,10 +30,10 @@ class TestSimpleFunctions(unittest.TestCase):
                             "data_type": "text",
                             "controlled_vocabulary": {
                                 "description": "xxxxx",
-                                "deprecated": False
-                            }
+                                "deprecated": False,
+                            },
                         },
-                        "deprecated": False
+                        "deprecated": False,
                     },
                 }
             ],
@@ -51,26 +46,20 @@ class TestSimpleFunctions(unittest.TestCase):
                 {
                     "key_1": "value_1",
                     "key_2": 123,
-                    "property": "5e59341a08a7b2ec0319cda1"
+                    "property": "5e59341a08a7b2ec0319cda1",
                 }
-            ]
+            ],
         }
 
         self.assertEqual(unexpend_json_properties(input_data), expected_output)
 
 
 class TestFormatConverter(unittest.TestCase):
-
     def test_api_to_form_format_case_1(self):
         """Simple value"""
         mapper = {"1": "username"}
 
-        input_format = [
-            {
-                "prop": "1",
-                "value": "Edward"
-            }
-        ]
+        input_format = [{"prop": "1", "value": "Edward"}]
 
         expected_form_format = {"username": "Edward"}
 
@@ -83,12 +72,7 @@ class TestFormatConverter(unittest.TestCase):
         """List of simple values"""
         mapper = {"1": "username"}
 
-        input_format = [
-            {
-                "prop": "1",
-                "value": ["Edward", "Annie"]
-            }
-        ]
+        input_format = [{"prop": "1", "value": ["Edward", "Annie"]}]
 
         expected_form_format = {"username": ["Edward", "Annie"]}
 
@@ -106,15 +90,13 @@ class TestFormatConverter(unittest.TestCase):
                 "prop": "1",
                 "value": [
                     {"prop": "2", "value": "C:/Documents"},
-                    {"prop": "3", "value": 1000}
-                ]
+                    {"prop": "3", "value": 1000},
+                ],
             }
         ]
 
         expected_form_format = {
-            "storage": {
-                "location": "C:/Documents", "number_of_files": 1000
-            }
+            "storage": {"location": "C:/Documents", "number_of_files": 1000}
         }
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
@@ -132,24 +114,20 @@ class TestFormatConverter(unittest.TestCase):
                 "value": [
                     [
                         {"prop": "3", "value": "Edward"},
-                        {"prop": "4", "value": "903 367 2072"}
+                        {"prop": "4", "value": "903 367 2072"},
                     ],
                     [
                         {"prop": "3", "value": "Annie"},
-                        {"prop": "4", "value": "731 222 8842"}
-                    ]
+                        {"prop": "4", "value": "731 222 8842"},
+                    ],
                 ],
             }
         ]
 
         expected_form_format = {
             "contacts": [
-                {
-                    "name": "Edward", "phone": "903 367 2072"
-                },
-                {
-                    "name": "Annie", "phone": "731 222 8842"
-                }
+                {"name": "Edward", "phone": "903 367 2072"},
+                {"name": "Annie", "phone": "731 222 8842"},
             ]
         }
 
@@ -162,12 +140,7 @@ class TestFormatConverter(unittest.TestCase):
         """Simple value"""
         mapper = {"1": "username"}
 
-        input_format = [
-            {
-                "prop": "1",
-                "value": "Edward"
-            }
-        ]
+        input_format = [{"prop": "1", "value": "Edward"}]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
         reconstructed_api_format = c.add_api_format(input_format).get_api_format()
@@ -178,12 +151,7 @@ class TestFormatConverter(unittest.TestCase):
         """List of simple values"""
         mapper = {"1": "username"}
 
-        input_format = [
-            {
-                "prop": "1",
-                "value": ["Edward", "Annie"]
-            }
-        ]
+        input_format = [{"prop": "1", "value": ["Edward", "Annie"]}]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
         reconstructed_api_format = c.add_api_format(input_format).get_api_format()
@@ -199,8 +167,8 @@ class TestFormatConverter(unittest.TestCase):
                 "prop": "1",
                 "value": [
                     {"prop": "2", "value": "C:/Documents"},
-                    {"prop": "3", "value": 1000}
-                ]
+                    {"prop": "3", "value": 1000},
+                ],
             }
         ]
 
@@ -219,12 +187,12 @@ class TestFormatConverter(unittest.TestCase):
                 "value": [
                     [
                         {"prop": "3", "value": "Edward"},
-                        {"prop": "4", "value": "903 367 2072"}
+                        {"prop": "4", "value": "903 367 2072"},
                     ],
                     [
                         {"prop": "3", "value": "Annie"},
-                        {"prop": "4", "value": "731 222 8842"}
-                    ]
+                        {"prop": "4", "value": "731 222 8842"},
+                    ],
                 ],
             }
         ]
@@ -239,12 +207,7 @@ class TestFormatConverter(unittest.TestCase):
 
         form_format = {"username": "Edward"}
 
-        expected_api_format = [
-            {
-                "prop": "1",
-                "value": "Edward"
-            }
-        ]
+        expected_api_format = [{"prop": "1", "value": "Edward"}]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
         actual_api_format = c.add_form_format(form_format).get_api_format()
@@ -256,12 +219,7 @@ class TestFormatConverter(unittest.TestCase):
 
         form_format = {"username": ["Edward", "Annie"]}
 
-        expected_api_format = [
-            {
-                "prop": "1",
-                "value": ["Edward", "Annie"]
-            }
-        ]
+        expected_api_format = [{"prop": "1", "value": ["Edward", "Annie"]}]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
         actual_api_format = c.add_form_format(form_format).get_api_format()
@@ -271,19 +229,15 @@ class TestFormatConverter(unittest.TestCase):
     def test_form_to_api_format_case_3(self):
         mapper = {"storage": "1", "location": "2", "number_of_files": "3"}
 
-        form_format = {
-            "storage": {
-                "location": "C:/Documents", "number_of_files": 1000
-            }
-        }
+        form_format = {"storage": {"location": "C:/Documents", "number_of_files": 1000}}
 
         expected_api_format = [
             {
                 "prop": "1",
                 "value": [
                     {"prop": "2", "value": "C:/Documents"},
-                    {"prop": "3", "value": 1000}
-                ]
+                    {"prop": "3", "value": 1000},
+                ],
             }
         ]
 
@@ -297,12 +251,8 @@ class TestFormatConverter(unittest.TestCase):
 
         form_format = {
             "contacts": [
-                {
-                    "name": "Edward", "phone": "903 367 2072"
-                },
-                {
-                    "name": "Annie", "phone": "731 222 8842"
-                }
+                {"name": "Edward", "phone": "903 367 2072"},
+                {"name": "Annie", "phone": "731 222 8842"},
             ]
         }
 
@@ -312,12 +262,12 @@ class TestFormatConverter(unittest.TestCase):
                 "value": [
                     [
                         {"prop": "3", "value": "Edward"},
-                        {"prop": "4", "value": "903 367 2072"}
+                        {"prop": "4", "value": "903 367 2072"},
                     ],
                     [
                         {"prop": "3", "value": "Annie"},
-                        {"prop": "4", "value": "731 222 8842"}
-                    ]
+                        {"prop": "4", "value": "731 222 8842"},
+                    ],
                 ],
             }
         ]
@@ -333,7 +283,7 @@ class TestFormatConverter(unittest.TestCase):
 
         input_format = [
             {"prop": "1", "value": "Edward"},
-            {"prop": "2", "value": "+33(0)123456789"}
+            {"prop": "2", "value": "+33(0)123456789"},
         ]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
@@ -356,12 +306,12 @@ class TestFormatConverter(unittest.TestCase):
         form_format = {
             "TO_KEEP_1": 1,
             "TO_REMOVE": "",
-            "TO_KEEP_2": [1,2,""],
+            "TO_KEEP_2": [1, 2, ""],
             "TO_KEEP_3": {"TO_KEEP": 31, "TO_REMOVE": ""},
             "TO_KEEP_4": [
                 {"TO_KEEP": 441, "TO_REMOVE": ""},
-                {"TO_REMOVE": "", "TO_REMOVE_2": ""}
-            ]
+                {"TO_REMOVE": "", "TO_REMOVE_2": ""},
+            ],
         }
         c = FormatConverter(mapper=mapper).add_form_format(form_format)
         c.clean_data()
@@ -369,12 +319,9 @@ class TestFormatConverter(unittest.TestCase):
         actual_output = c.get_form_format()
         expected_output = {
             "TO_KEEP_1": 1,
-            "TO_KEEP_2": [1,2],
+            "TO_KEEP_2": [1, 2],
             "TO_KEEP_3": {"TO_KEEP": 31},
-            "TO_KEEP_4": [
-                {"TO_KEEP": 441},
-                {}
-            ]
+            "TO_KEEP_4": [{"TO_KEEP": 441}, {}],
         }
 
         self.assertEqual(actual_output, expected_output)
@@ -391,7 +338,7 @@ class TestFormatConverter(unittest.TestCase):
         expected_output = {
             "username": "johnd",
             "first_name": "John",
-            "last_name": "Doe"
+            "last_name": "Doe",
         }
         actual_output = c_1.add_or_update_entries(c_2.entries).get_form_format()
 
@@ -400,7 +347,7 @@ class TestFormatConverter(unittest.TestCase):
     def test_remove_entries(self):
         mapper = {"KEEP": "0", "REMOVE_1": "1", "REMOVE_2": "2", "REMOVE_3": "3"}
 
-        form_format = {"KEEP": 1, "REMOVE_1": 2, "REMOVE_2": 3, "REMOVE_3": 4 }
+        form_format = {"KEEP": 1, "REMOVE_1": 2, "REMOVE_2": 3, "REMOVE_3": 4}
         c = FormatConverter(mapper=mapper).add_form_format(form_format)
         assert len(c.entries) == 4
 
@@ -419,16 +366,18 @@ class TestFormatConverter(unittest.TestCase):
 
 
 class TestNestedEntry(unittest.TestCase):
-
     def test_get_entry_by_name(self):
         """Get an entry based on its prop_name"""
         mapper = {"1": "user", "2": "username", "3": "phone"}
 
         input_format = [
-            {"prop": "1", "value": [
-                {"prop": "2", "value": "Edward"},
-                {"prop": "3", "value": "+33(0)123456789"}
-            ]}
+            {
+                "prop": "1",
+                "value": [
+                    {"prop": "2", "value": "Edward"},
+                    {"prop": "3", "value": "+33(0)123456789"},
+                ],
+            }
         ]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
@@ -439,22 +388,24 @@ class TestNestedEntry(unittest.TestCase):
 
 
 class TestNestedListEntry(unittest.TestCase):
-
     def test_find_nested_entry(self):
         """Get a specific NestedEntry based on the value of a property"""
         mapper = {"1": "users", "2": "username", "3": "phone"}
 
         input_format = [
-            {"prop": "1", "value": [
-                [
-                    {"prop": "2", "value": "Edward"},
-                    {"prop": "3", "value": "+33(0)123456789"}
+            {
+                "prop": "1",
+                "value": [
+                    [
+                        {"prop": "2", "value": "Edward"},
+                        {"prop": "3", "value": "+33(0)123456789"},
+                    ],
+                    [
+                        {"prop": "2", "value": "John"},
+                        {"prop": "3", "value": "+33(9)876543210"},
+                    ],
                 ],
-                [
-                    {"prop": "2", "value": "John"},
-                    {"prop": "3", "value": "+33(9)876543210"}
-                ]
-            ]}
+            }
         ]
 
         c = FormatConverter(key_name="prop", value_name="value", mapper=mapper)
