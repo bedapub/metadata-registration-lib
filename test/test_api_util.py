@@ -4,6 +4,8 @@ from metadata_registration_lib.api_utils import (
     FormatConverter,
     unexpend_json_properties,
     reverse_map,
+    replace_synonyms_by_name,
+    find_name_from_synonym,
 )
 
 
@@ -415,3 +417,31 @@ class TestNestedListEntry(unittest.TestCase):
 
         self.assertEqual(nested_entry.get_form_format()["phone"], "+33(9)876543210")
         self.assertEqual(position, 1)
+
+
+class TestSynonymsReplacement(unittest.TestCase):
+    mapper = {"lab_code": ["labo", "Laboratory"], "nested_prop": []}
+
+    def test_find_name_from_synonym(self):
+        self.assertEqual(find_name_from_synonym("Laboratory", self.mapper), "lab_code")
+
+    def test_replace_synonyms_by_name(self):
+        input_form_format = {
+            "Laboratory": "abc",
+            "nested_prop": {
+                "Laboratory": "abc",
+            },
+        }
+
+        output_form_format = {
+            "lab_code": "abc",
+            "nested_prop": {
+                "lab_code": "abc",
+            },
+        }
+        self.assertEqual(
+            replace_synonyms_by_name(input_form_format, self.mapper), output_form_format
+        )
+
+    # replace_synonyms_by_name,
+    # find_name_from_synonym,

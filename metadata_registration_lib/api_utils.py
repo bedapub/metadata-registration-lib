@@ -564,17 +564,77 @@ def add_uuid_entry_if_missing(entity_converter, prop_name_to_id, replace=False):
 
 
 def get_entity_converter(
-    entries, entry_format, prop_id_to_name=None, prop_name_to_id=None
+    entries,
+    entry_format,
+    prop_id_to_name=None,
+    prop_name_to_id=None,
+    replace_synonyms=False,
+    prop_name_to_syns=None,
 ):
     if entry_format == "api":
         entity_converter = FormatConverter(mapper=prop_id_to_name)
         entity_converter.add_api_format(entries)
     elif entry_format == "form":
+        if replace_synonyms:
+            if prop_name_to_syns is None:
+                raise Exception(
+                    "Please provide a prop_name_to_syns map if using replace_synonyms"
+                )
+
+            entries = replace_synonyms_by_name(entries, prop_name_to_syns)
+
         entity_converter = FormatConverter(mapper=prop_name_to_id)
         entity_converter.add_form_format(entries)
 
     discarded_entries = entity_converter.clean_data()
     return entity_converter, discarded_entries
+
+
+def replace_synonyms_by_name(form_data, prop_name_to_syns):
+    """Reccursively tries to find property names if synonyms were used in form data payload
+
+    Args:
+        form_data (dict): data in form format
+        prop_name_to_syns (dict): property map, name to synonyms list
+
+    Returns:
+        form_data (dict): Updated form data
+    """
+    for key in form_data.keys():
+        if (
+            type(form_data[key]) == list
+            and len(form_data[key]) > 0
+            and type(form_data[key][0]) == dict
+        ):
+            for nested_form_data in form_data[key]:
+                nested_form_data = replace_synonyms_by_name(
+                    nested_form_data, prop_name_to_syns
+                )
+        elif type(form_data[key]) == dict:
+            form_data[key] = replace_synonyms_by_name(form_data[key], prop_name_to_syns)
+
+        if key not in prop_name_to_syns:
+            prop_name = find_name_from_synonym(key, prop_name_to_syns)
+            form_data[prop_name] = form_data.pop(key)
+
+    return form_data
+
+
+def find_name_from_synonym(synonym, prop_name_to_syns):
+    """Find property name from synonym
+
+    Args:
+        synonym (str): Property synonym
+        prop_name_to_syns (dict): property map, name to synonyms list
+
+    Returns:
+        name: Property name
+    """
+    for name, synonyms in prop_name_to_syns.items():
+        if synonym in synonyms:
+            return name
+    else:
+        raise Exception(f"Synonym '{synonym}' not found")
 
 
 def add_entity_to_study_nested_list(
