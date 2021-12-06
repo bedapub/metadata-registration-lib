@@ -144,6 +144,7 @@ def get_all_data_from_qpcr_plate_rows(rows):
 
         # Plate start
         elif "161718192021222324" in "".join(row) or "9101112131415" in "".join(row):
+            prev_rep_name = None
 
             for _ in range(0, 16):
                 row = next(rows_iter)
@@ -171,6 +172,13 @@ def get_all_data_from_qpcr_plate_rows(rows):
 
                         # Readouts data
                         readout_num += 1
+                        rep_name = f"{sample_id}__{target_name}"
+                        if rep_name == prev_rep_name:
+                            rep_number += 1
+                        else:
+                            rep_number = 1
+                            prev_rep_name = rep_name
+
                         data["readouts"].append(
                             OrderedDict(
                                 {
@@ -178,6 +186,8 @@ def get_all_data_from_qpcr_plate_rows(rows):
                                     "Sample ID": sample_name_to_id[sample_name],
                                     "Plate ID": plate_id,
                                     "Well ID": well_id,
+                                    "qPCR assay": target_name,
+                                    "Replicate": str(rep_number),
                                 }
                             )
                         )
