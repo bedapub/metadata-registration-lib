@@ -227,3 +227,67 @@ def get_all_data_from_qpcr_plate_rows(rows):
             plate_id = "NOT FOUND"
 
     return data
+
+
+def get_data_from_illumina_samples_sheet_rows(rows):
+    """Read Illumina samples in CSV format and parse file to
+    extract manifest data
+
+    Args:
+        rows (list of list): list of rows from an Illumina samples file
+
+    Returns:
+        (dict of list of OrderedDict): flat data for different kind of outputs
+    """
+    data = {
+        "readouts": [],
+    }
+
+    seq_read_type = None
+
+    rows_iter = iter(rows)
+    for row in rows_iter:
+
+        # Check sequence read type (if single row with int: single, if two rows with int: paired)
+        if row[0] == "[Reads]":
+            row = next(rows_iter)
+            try:
+                int(row[0])
+            except:
+                raise Exception("The column after [Reads] is not an integer")
+            row = next(rows_iter)
+            try:
+                int(row[0])
+                seq_read_type = "paired"
+            except:
+                seq_read_type = "single"
+
+        elif row[0] == "[Data]":
+            break
+
+    if seq_read_type is None:
+        raise Exception(
+            "The sequence reads type couldn't be determined: [Reads] not found in first column"
+        )
+
+    # Continue looping through rows - Start samples table
+    readout_number = 0
+    headers = next(rows_iter)
+    for readout_number, row in enumerate(rows_iter, 1):
+        record = {key: value for key, value in zip(headers, row)}
+
+        readout_data = OrderedDict(
+            {
+                "Readout ID": f"Readout {readout_number}",
+                "Sample ID": record["Sample_ID"],
+                "Fastq forward": f"{record['Sample_ID']}_S{readout_number}_R1_001.fastq.gz",
+            }
+        )
+
+        if seq_read_type == "paired":
+            fastq_reverse = f"{record['Sample_ID']}_S{readout_number}_R2_001.fastq.gz"
+            readout_data["Fastq reverse"] = fastq_reverse
+
+        data["readouts"].append(readout_data)
+
+    return data
