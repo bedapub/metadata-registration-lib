@@ -280,6 +280,10 @@ def get_data_from_illumina_samples_sheet_rows(rows):
             {
                 "Readout ID": f"Readout {readout_number}",
                 "Sample ID": record["Sample_ID"],
+                "Library Concentration": "",
+                "Library Concentration Unit": "",
+                "Library Average Size": "",
+                "Read Counts": "",
                 "Fastq forward": f"{record['Sample_ID']}_S{readout_number}_R1_001.fastq.gz",
             }
         )
