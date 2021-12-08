@@ -51,6 +51,20 @@ def write_file_from_denorm_data_2(f, data, file_format):
         raise Exception(f"Format '{file_format}' not supported")
 
 
+def write_dict_list_wrapper(data, file_name, output_dir, format="xlsx"):
+    headers = list(data[0].keys())
+
+    file_path = os.path.join(output_dir.name, file_name)
+    f = open(file_path, "w")
+    if format == "xlsx":
+        write_dict_list_xlsx(f, data, headers)
+    elif format == "xls":
+        write_dict_list_xls(f, data, headers)
+    else:
+        raise Exception(f"Format '{format}'' not implemented")
+    f.close()
+
+
 def write_dict_list_xlsx(file, data, headers):
     """
     Write XLSX files
