@@ -4,5 +4,3 @@ dynamic-form==0.3.3
 xlsxwriter
 openpyxl
 xlrd
-xlwt
-# lxml
