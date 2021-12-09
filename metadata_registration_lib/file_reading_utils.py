@@ -108,6 +108,33 @@ def get_records_and_headers_from_excel(input_file):
 #################################################
 ######## Read files as list of rows
 #################################################
+def get_rows_from_any_file(input_file, format=None):
+    """Read any file and return th
+
+    Args:
+        input_file (file): Input file (FileStorage posted from form works)
+        format (str, optional): File format. Defaults to None.
+
+    Returns:
+        list: Rows of files
+    """
+    if format == None:
+        try:
+            format = input_file.filename.split(".")[-1]
+        except:
+            format = "txt"
+
+    if format in ["xlsx", "xls"]:
+        return get_rows_from_excel_file(input_file)
+    elif format in ["csv", "tsv"]:
+        format_sep_map = {"csv": ",", "tsv": "\t"}
+        lines = [l.decode("utf-8") for l in input_file.readlines()]
+        reader = csv.reader(lines, delimiter=format_sep_map[format])
+        return list(reader)
+    else:
+        return [l.decode("utf-8") for l in input_file.readlines()]
+
+
 def get_rows_from_excel_file(
     input_file,
     sheet_number=None,
