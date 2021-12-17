@@ -214,7 +214,7 @@ class Step(metaclass=abc.ABCMeta):
             for prop_name, value in zip(self.entity_set.prop_names, entity_as_list):
 
                 if prop_name in self.prop_names_multiple:
-                    value = [v.strip() for v in re.split(";|,", value)]
+                    value = [v.strip() for v in re.split(";", value)]
 
                 # Nest referenced objects (using TMP ID)
                 if prop_name in [s.name for s in self.nested_steps]:
@@ -496,7 +496,7 @@ class StepReadouts(Step):
                 value = entity_as_list[j]
 
                 if prop_name in self.prop_names_multiple:
-                    value = [v.strip() for v in re.split(";|,", value)]
+                    value = [v.strip() for v in re.split(";", value)]
 
                 # Nest referenced objects (using TMP ID)
                 if prop_name in self.nest_obj_required + self.obj_uuid_required:
