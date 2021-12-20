@@ -34,8 +34,6 @@ setup(
         "requests",
         "dynamic-form",
         "xlsxwriter",
-        "openpyxl",
-        "xlrd",
         "xlwt",
     ],
     classifiers=[
